@@ -1,0 +1,9 @@
+#helloWindow {
+    background: rgb(255, 255, 255);
+}
+
+QLabel {
+    color: rgb(0, 159, 170);
+    font-size: 20px;
+    font-weight: 600;
+}
