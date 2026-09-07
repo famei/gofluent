@@ -178,8 +178,8 @@ func NewInfoBar(icon interface{}, title, content string, orient qt.Orientation, 
 		position:   position,
 	}
 
-	b.titleLabel = qt.NewQLabel2()
-	b.contentLabel = qt.NewQLabel2()
+	b.titleLabel = qt.NewQLabel(b.QWidget)
+	b.contentLabel = qt.NewQLabel(b.QWidget)
 	b.closeButton = NewTransparentToolButtonIcon(common.Close, b.QWidget).QToolButton
 	b.iconWidget = NewInfoIconWidget(icon, nil)
 
