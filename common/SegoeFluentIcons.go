@@ -35,6 +35,13 @@ func (f SegoeFluentIcon) RenderGlyph(painter *qt.QPainter, rect *qt.QRectF, them
 	if FluentIconFont == nil {
 		SegoeFluentInit()
 	}
+	// The glyph is drawn with the icon font and its own pen/brush, so the whole
+	// painter state is saved and restored: a caller that draws text right after
+	// the icon (the command bar's buttons, for one) would otherwise inherit the
+	// icon font — which has no Latin glyphs — and lose its label.
+	painter.Save()
+	defer painter.Restore()
+
 	FluentIconFont.SetPixelSize(int(rect.Height()))
 	painter.SetFont(FluentIconFont)
 	painter.SetPenWithStyle(qt.NoPen)
@@ -45,6 +52,8 @@ func (f SegoeFluentIcon) RenderGlyph(painter *qt.QPainter, rect *qt.QRectF, them
 		brush = qt.NewQBrush3(f.iconColor(theme))
 	}
 
+	// The painter copies the brush on setBrush, so the temporary is released here
+	// (Restore still runs last, because defers unwind in reverse order).
 	defer brush.Delete()
 	painter.SetBrush(brush)
 	painter.SetRenderHints(qt.QPainter__Antialiasing | qt.QPainter__TextAntialiasing)

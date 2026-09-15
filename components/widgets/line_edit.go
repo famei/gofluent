@@ -88,8 +88,20 @@ func (w *LineEditButton) SetIcon(icon interface{}) {
 func (w *LineEditButton) SetAction(action *qt.QAction) {
 	w.action = action
 	w.syncAction()
-	w.OnClicked(action.Trigger)
-	action.OnToggled(func(checked bool) { w.SetChecked(checked) })
+	// The action is usually created by the caller and outlives the button (the
+	// whole widget tree can be rebuilt, e.g. on a language change), so its toggled
+	// signal must not call into a destroyed button.
+	alive := trackWidget(w.OnDestroyed)
+	w.OnClicked(func() {
+		if alive.ok() {
+			action.Trigger()
+		}
+	})
+	action.OnToggled(func(checked bool) {
+		if alive.ok() {
+			w.SetChecked(checked)
+		}
+	})
 }
 
 // Action returns the bound action.

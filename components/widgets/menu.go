@@ -459,11 +459,18 @@ type RoundMenu struct {
 	// stopAnim (called on close/clear and before a new popup), never inside the
 	// animation's own finished signal (that would be a use-after-free).
 	anim *common.ProgressAnimation
+
+	// alive drops the action callbacks once the menu is destroyed: the actions it
+	// renders are commonly unparented and outlive it (a combo box builds a fresh
+	// menu per drop-down, which dies with the combo), and an action's changed
+	// signal firing into a destroyed menu would crash (see widgetAlive).
+	alive *widgetAlive
 }
 
 // NewRoundMenu builds a round menu.
 func NewRoundMenu(title string, parent *qt.QWidget) *RoundMenu {
 	m := &RoundMenu{QMenu: qt.NewQMenu4(title, parent), itemHeight: 28, title: title, itemData: map[unsafe.Pointer]*menuItemData{}}
+	m.alive = trackWidget(m.OnDestroyed)
 	m.SetTitle(title)
 	m.SetWindowFlags(qt.Popup | qt.FramelessWindowHint | qt.NoDropShadowWindowHint)
 	m.SetAttribute(qt.WA_TranslucentBackground)
@@ -576,7 +583,11 @@ func (m *RoundMenu) AddAction(action *qt.QAction) {
 	item := m.createActionItem(action)
 	m.view.AddItemWithItem(item)
 	m.itemData[item.UnsafePointer()] = &menuItemData{kind: menuItemAction, action: action}
-	action.OnChanged(func() { m.onActionChanged(action) })
+	action.OnChanged(func() {
+		if m.alive.ok() {
+			m.onActionChanged(action)
+		}
+	})
 	m.resizeSubMenuItems()
 	m.AdjustSize()
 }
@@ -622,7 +633,11 @@ func (m *RoundMenu) InsertAction(before, action *qt.QAction) {
 	item := m.createActionItem(action)
 	m.view.InsertItem(row, item)
 	m.itemData[item.UnsafePointer()] = &menuItemData{kind: menuItemAction, action: action}
-	action.OnChanged(func() { m.onActionChanged(action) })
+	action.OnChanged(func() {
+		if m.alive.ok() {
+			m.onActionChanged(action)
+		}
+	})
 	m.resizeSubMenuItems()
 	m.AdjustSize()
 }

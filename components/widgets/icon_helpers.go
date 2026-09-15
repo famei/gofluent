@@ -9,14 +9,19 @@ import (
 )
 
 // renderFluentIcon draws a FluentIcon into painter at rect using the given
-// theme (ThemeAuto follows the current theme). Non-FluentIcon sources are
-// delegated to common.DrawIcon.
+// theme (ThemeAuto follows the current theme). Every FluentIconBase honours the
+// theme, which is what lets a caller ask for the reversed color (e.g. a checked
+// command-bar button drawn on the accent background); other sources are handed
+// to common.DrawIcon, which paints a pre-rendered pixmap as it is.
 func renderFluentIcon(icon interface{}, painter *qt.QPainter, rect *qt.QRectF, theme common.Theme) {
-	if fi, ok := icon.(common.FluentIcon); ok {
-		fi.Render(painter, rect, theme)
-		return
+	switch v := icon.(type) {
+	case common.FluentIcon:
+		v.Render(painter, rect, theme)
+	case common.FluentIconBase:
+		v.Render(painter, rect, theme)
+	default:
+		common.DrawIcon(icon, painter, rect)
 	}
-	common.DrawIcon(icon, painter, rect)
 }
 
 // renderFluentIconWithFill renders a FluentIcon recolored to the given hex fill

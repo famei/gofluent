@@ -2,6 +2,8 @@ package common
 
 import (
 	"regexp"
+	"sync"
+	"unsafe"
 
 	"github.com/famei/gofluent/resources"
 	qt "github.com/mappu/miqt/qt"
@@ -404,6 +406,12 @@ func (f *FluentFontIconBase) renderGlyph(painter *qt.QPainter, rect *qt.QRectF, 
 	defer font.Delete()
 	font.SetBold(f.isBold)
 	font.SetPixelSize(int(rect.Height()))
+
+	// Save/restore the painter state so the glyph font and its pen/brush never
+	// leak into the caller (which may draw its own text right after the icon).
+	painter.Save()
+	defer painter.Restore()
+
 	painter.SetFont(font)
 	painter.SetPenWithStyle(qt.NoPen)
 	brush := qt.NewQBrush3(f.iconColor(theme))
@@ -510,15 +518,26 @@ func NewActionIcon(icon *qt.QIcon, text string, parent *qt.QObject) *Action {
 }
 
 // NewActionFluentIcon builds an action from a FluentIconBase and text.
+//
+// The action's icon is always the icon of the *current theme*: an action's icon
+// is shown by many widgets (menu rows, command-bar buttons, tool buttons) and
+// only some of them draw it on an accent background, so the inversion of a
+// checked (accent) state belongs to those widgets, not to the shared action. A
+// checked RoundMenu row, for example, keeps the ordinary menu surface and would
+// otherwise show a white icon on a light menu.
 func NewActionFluentIcon(icon FluentIconBase, text string, parent *qt.QObject) *Action {
 	a := &Action{QAction: qt.NewQAction6(icon.Icon(ThemeAuto), text, parent), fluentIcon: icon}
+	registerActionIcon(a.QAction, icon)
 
 	// Re-render the icon when the theme changes. The action is often handed to a
 	// RoundMenu / CommandBar as its embedded *qt.QAction, so the fluentIcon is
 	// no longer reachable there; without this the menu/command-bar icons keep the
 	// color they were rendered with at construction (black icons in dark mode).
 	destroyed := false
-	a.QAction.OnDestroyed(func() { destroyed = true })
+	a.QAction.OnDestroyed(func() {
+		destroyed = true
+		unregisterActionIcon(a.QAction)
+	})
 	QConfigInstance.OnThemeChanged(func(Theme) {
 		if destroyed {
 			return
@@ -526,20 +545,50 @@ func NewActionFluentIcon(icon FluentIconBase, text string, parent *qt.QObject) *
 		a.QAction.SetIcon(icon.Icon(ThemeAuto))
 	})
 
-	// When the action is checkable, re-render the icon with the reversed color
-	// on toggle so the checked (highlighted) state uses the inverted icon (e.g.
-	// white on the accent background instead of black). OnToggled only fires for
-	// checkable actions, so this is a no-op otherwise.
-	a.QAction.OnToggled(func(checked bool) {
-		if destroyed {
-			return
-		}
-		if a.fluentIcon != nil {
-			a.QAction.SetIcon(a.fluentIcon.QIcon(checked))
-		}
-	})
-
 	return a
+}
+
+// actionIconSources maps the C++ QAction of a fluent action to the icon source
+// it was built from.
+//
+// A *qt.QAction only carries a rendered *qt.QIcon, but a widget that draws a
+// checkable action itself sometimes needs the source instead: the command bar's
+// toggle button re-renders the icon in the reversed color while it is checked
+// (its checked state paints on the accent background), which a pre-rendered
+// pixmap cannot express. The key is the C++ pointer, because miqt hands out a
+// fresh Go wrapper for the same QAction from every accessor.
+var (
+	actionIconSourcesMu sync.RWMutex
+	actionIconSources   = map[unsafe.Pointer]FluentIconBase{}
+)
+
+// FluentIconOf returns the fluent icon source that action was built from with
+// NewActionFluentIcon, or nil for a plain QAction (or an unknown action).
+func FluentIconOf(action *qt.QAction) FluentIconBase {
+	if action == nil {
+		return nil
+	}
+	actionIconSourcesMu.RLock()
+	defer actionIconSourcesMu.RUnlock()
+	return actionIconSources[action.UnsafePointer()]
+}
+
+func registerActionIcon(action *qt.QAction, icon FluentIconBase) {
+	if action == nil || icon == nil {
+		return
+	}
+	actionIconSourcesMu.Lock()
+	defer actionIconSourcesMu.Unlock()
+	actionIconSources[action.UnsafePointer()] = icon
+}
+
+func unregisterActionIcon(action *qt.QAction) {
+	if action == nil {
+		return
+	}
+	actionIconSourcesMu.Lock()
+	defer actionIconSourcesMu.Unlock()
+	delete(actionIconSources, action.UnsafePointer())
 }
 
 // FluentIcon returns the wrapped fluent icon (nil when the action was built

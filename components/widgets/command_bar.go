@@ -78,9 +78,28 @@ func (b *CommandButton) SetToolButtonStyle(style qt.ToolButtonStyle) {
 func (b *CommandButton) SetAction(action *qt.QAction) {
 	b._action = action
 	b.onActionChanged()
-	b.OnClicked(func() { action.Trigger() })
-	action.OnToggled(func(checked bool) { b.SetChecked(checked) })
-	action.OnChanged(func() { b.onActionChanged() })
+
+	// The action outlives the button whenever the button's tree is deleted (a
+	// command-bar flyout deletes its whole bar when it closes, while the actions
+	// stay alive in the page that created them), so every callback is dropped once
+	// the button is gone. Without the guard a theme switch — which re-renders each
+	// action icon and therefore fires changed() — calls into freed widget memory.
+	alive := trackWidget(b.OnDestroyed)
+	b.OnClicked(func() {
+		if alive.ok() {
+			action.Trigger()
+		}
+	})
+	action.OnToggled(func(checked bool) {
+		if alive.ok() {
+			b.SetChecked(checked)
+		}
+	})
+	action.OnChanged(func() {
+		if alive.ok() {
+			b.onActionChanged()
+		}
+	})
 }
 
 // Action returns the bound action (nil when none).
@@ -91,7 +110,14 @@ func (b *CommandButton) onActionChanged() {
 	if action == nil {
 		return
 	}
-	b.SetIcon(action.Icon())
+	// Keep the fluent icon source when the action has one: the button paints its
+	// own icon and reverses it while checked (the checked state sits on the
+	// accent background), which the action's pre-rendered QIcon cannot express.
+	if src := common.FluentIconOf(action); src != nil {
+		b.SetIcon(src)
+	} else {
+		b.SetIcon(action.Icon())
+	}
 	b.SetText(action.Text())
 	b.SetToolTip(action.ToolTip())
 	b.SetEnabled(action.IsEnabled())
