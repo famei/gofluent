@@ -34,7 +34,7 @@ func newToolButtonDemo() *toolButtonDemo {
 	menu.AddAction(common.NewActionFluentIcon(common.SendFill, "Send", nil).QAction)
 	menu.AddAction(common.NewActionFluentIcon(common.Save, "Save", nil).QAction)
 
-	toolButton := widgets.NewToolButtonIcon(common.Setting, w.QWidget)
+	toolButton := widgets.NewToolButtonIcon(common.Settings, w.QWidget)
 
 	dropDownToolButton := widgets.NewDropDownToolButtonIcon(common.Mail, w.QWidget)
 	dropDownToolButton.SetMenu(menu)
@@ -42,7 +42,7 @@ func newToolButtonDemo() *toolButtonDemo {
 	splitToolButton := widgets.NewSplitToolButtonIcon(common.GitHub, w.QWidget)
 	splitToolButton.SetFlyout(menu)
 
-	primaryToolButton := widgets.NewPrimaryToolButtonIcon(common.Setting, w.QWidget)
+	primaryToolButton := widgets.NewPrimaryToolButtonIcon(common.Settings, w.QWidget)
 
 	primaryDropDownToolButton := widgets.NewPrimaryDropDownToolButtonIcon(common.Mail, w.QWidget)
 	primaryDropDownToolButton.SetMenu(menu)
@@ -50,7 +50,7 @@ func newToolButtonDemo() *toolButtonDemo {
 	primarySplitToolButton := widgets.NewPrimarySplitToolButtonIcon(common.GitHub, w.QWidget)
 	primarySplitToolButton.SetFlyout(menu)
 
-	toggleToolButton := widgets.NewToggleToolButtonIcon(common.Setting, w.QWidget)
+	toggleToolButton := widgets.NewToggleToolButtonIcon(common.Settings, w.QWidget)
 	toggleToolButton.OnToggled(func(bool) { fmt.Println("Toggled") })
 	toggleToolButton.Toggle()
 
@@ -97,24 +97,24 @@ func newPushButtonDemo() *pushButtonDemo {
 	w := &pushButtonDemo{QWidget: newButtonView()}
 
 	menu := widgets.NewRoundMenu("", w.QWidget)
-	menu.AddAction(common.NewActionFluentIcon(common.Basketball, "Basketball", nil).QAction)
-	menu.AddAction(common.NewActionFluentIcon(common.Album, "Sing", nil).QAction)
-	menu.AddAction(common.NewActionFluentIcon(common.Music, "Music", nil).QAction)
+	menu.AddAction(common.NewActionFluentIcon(common.LeafTwo, "Basketball", nil).QAction)
+	menu.AddAction(common.NewActionFluentIcon(common.MusicAlbum, "Sing", nil).QAction)
+	menu.AddAction(common.NewActionFluentIcon(common.Audio, "Music", nil).QAction)
 
 	pushButton1 := widgets.NewPushButtonText("Standard push button", nil)
 	pushButton2 := widgets.NewPushButtonIcon(common.Folder, "Standard push button with icon", w.QWidget)
 
 	primaryButton1 := widgets.NewPrimaryPushButtonText("Accent style button", w.QWidget)
-	primaryButton2 := widgets.NewPrimaryPushButtonIcon(common.Update, "Accent style button with icon", w.QWidget)
+	primaryButton2 := widgets.NewPrimaryPushButtonIcon(common.Sync, "Accent style button with icon", w.QWidget)
 
 	transparentPushButton1 := widgets.NewTransparentPushButtonText("Transparent push button", w.QWidget)
-	transparentPushButton2 := widgets.NewTransparentPushButtonIcon(common.BookShelf, "Transparent push button", w.QWidget)
+	transparentPushButton2 := widgets.NewTransparentPushButtonIcon(common.Library, "Transparent push button", w.QWidget)
 
 	toggleButton1 := widgets.NewToggleButtonText("Toggle push button", w.QWidget)
 	toggleButton2 := widgets.NewToggleButtonIcon(common.Send, "Toggle push button", w.QWidget)
 
 	transparentTogglePushButton1 := widgets.NewTransparentTogglePushButtonText("Transparent toggle button", w.QWidget)
-	transparentTogglePushButton2 := widgets.NewTransparentTogglePushButtonIcon(common.BookShelf, "Transparent toggle button", w.QWidget)
+	transparentTogglePushButton2 := widgets.NewTransparentTogglePushButtonIcon(common.Library, "Transparent toggle button", w.QWidget)
 
 	dropDownPushButton1 := widgets.NewDropDownPushButtonText("Email", w.QWidget)
 	dropDownPushButton2 := widgets.NewDropDownPushButtonIcon(common.Mail, "Email", w.QWidget)

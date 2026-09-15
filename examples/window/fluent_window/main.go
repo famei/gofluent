@@ -77,15 +77,15 @@ func newWindow() *Window {
 
 func (w *Window) initNavigation() {
 	w.AddSubInterface(w.homeInterface.QWidget, common.Home, "Home", navigation.NavigationItemPositionTop, nil, false)
-	w.AddSubInterface(w.musicInterface.QWidget, common.Music, "Music library", navigation.NavigationItemPositionTop, nil, false)
+	w.AddSubInterface(w.musicInterface.QWidget, common.Audio, "Music library", navigation.NavigationItemPositionTop, nil, false)
 	w.AddSubInterface(w.videoInterface.QWidget, common.Video, "Video library", navigation.NavigationItemPositionTop, nil, false)
 
 	w.NavigationInterface().AddSeparator(navigation.NavigationItemPositionScroll)
 
-	w.AddSubInterface(w.albumInterface.QWidget, common.Album, "Albums", navigation.NavigationItemPositionScroll, nil, false)
-	w.AddSubInterface(w.albumInterface1.QWidget, common.Album, "Album 1", navigation.NavigationItemPositionScroll, w.albumInterface.QWidget, false)
-	w.AddSubInterface(w.albumInterface1_1.QWidget, common.Album, "Album 1.1", navigation.NavigationItemPositionScroll, w.albumInterface1.QWidget, false)
-	w.AddSubInterface(w.albumInterface2.QWidget, common.Album, "Album 2", navigation.NavigationItemPositionScroll, w.albumInterface.QWidget, false)
+	w.AddSubInterface(w.albumInterface.QWidget, common.MusicAlbum, "Albums", navigation.NavigationItemPositionScroll, nil, false)
+	w.AddSubInterface(w.albumInterface1.QWidget, common.MusicAlbum, "Album 1", navigation.NavigationItemPositionScroll, w.albumInterface.QWidget, false)
+	w.AddSubInterface(w.albumInterface1_1.QWidget, common.MusicAlbum, "Album 1.1", navigation.NavigationItemPositionScroll, w.albumInterface1.QWidget, false)
+	w.AddSubInterface(w.albumInterface2.QWidget, common.MusicAlbum, "Album 2", navigation.NavigationItemPositionScroll, w.albumInterface.QWidget, false)
 	w.AddSubInterface(w.folderInterface.QWidget, common.Folder, "Folder library", navigation.NavigationItemPositionScroll, nil, false)
 
 	// add custom avatar widget to the bottom
@@ -99,7 +99,7 @@ func (w *Window) initNavigation() {
 		"",
 	)
 
-	w.AddSubInterface(w.settingInterface.QWidget, common.Setting, "Settings", navigation.NavigationItemPositionBottom, nil, false)
+	w.AddSubInterface(w.settingInterface.QWidget, common.Settings, "Settings", navigation.NavigationItemPositionBottom, nil, false)
 
 	// add badge to the video navigation item
 	if item := w.NavigationInterface().Widget(w.videoInterface.ObjectName()); item != nil {

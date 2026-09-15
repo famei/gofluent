@@ -79,12 +79,12 @@ const (
 // 9x9 when pressed), mirroring the Python ScrollButton.
 type ScrollButton struct {
 	*qt.QToolButton
-	icon      common.FluentIcon
+	icon      common.FluentIconBase
 	isPressed bool
 }
 
 // NewScrollButton builds a calendar scroll button.
-func NewScrollButton(icon common.FluentIcon, parent *qt.QWidget) *ScrollButton {
+func NewScrollButton(icon common.FluentIconBase, parent *qt.QWidget) *ScrollButton {
 	b := &ScrollButton{QToolButton: qt.NewQToolButton(parent), icon: icon}
 	b.SetObjectName("scrollButton")
 	b.SetStyleSheet(scrollButtonStyleSheet())
@@ -403,8 +403,8 @@ func NewCalendarView(parent *qt.QWidget) *CalendarView {
 	v.yearView = qt.NewQListWidget(v.view.QWidget)
 	v.titleButton = qt.NewQPushButton(v.view.QWidget)
 	v.resetButton = NewScrollButton(common.Cancel, v.view.QWidget)
-	v.upButton = NewScrollButton(common.CareUpSolid, v.view.QWidget)
-	v.downButton = NewScrollButton(common.CareDownSolid, v.view.QWidget)
+	v.upButton = NewScrollButton(common.CaretSolidUp, v.view.QWidget)
+	v.downButton = NewScrollButton(common.CaretSolidDown, v.view.QWidget)
 
 	v.dayDelegate = NewScrollItemDelegate(v.dayView, 3, cellDay)
 	v.monthDelegate = NewScrollItemDelegate(v.monthView, 8, cellMonth)

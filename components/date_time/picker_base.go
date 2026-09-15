@@ -633,7 +633,7 @@ func NewPickerPanel(parent *qt.QWidget) *PickerPanel {
 	p.hSeparatorWidget = NewSeparatorWidget(qt.Horizontal, p.view.QWidget)
 	p.yesButton = widgets.NewTransparentToolButtonIcon(common.Accept, p.view.QWidget)
 	p.resetButton = widgets.NewTransparentToolButtonIcon(common.Cancel, p.view.QWidget)
-	p.cancelButton = widgets.NewTransparentToolButtonIcon(common.Close, p.view.QWidget)
+	p.cancelButton = widgets.NewTransparentToolButtonIcon(common.Cancel, p.view.QWidget)
 
 	p.hBoxLayout = qt.NewQHBoxLayout(p.QWidget)
 	p.listLayout = qt.NewQHBoxLayout2()

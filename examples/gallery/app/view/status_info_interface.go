@@ -19,7 +19,7 @@ type StatusInfoInterface struct {
 // NewStatusInfoInterface builds the status info interface.
 func NewStatusInfoInterface(parent *qt.QWidget) *StatusInfoInterface {
 	t := gallerycommon.NewTranslator()
-	i := &StatusInfoInterface{GalleryInterface: NewGalleryInterface(t.StatusInfo, "qfluentwidgets.components.widgets", parent)}
+	i := &StatusInfoInterface{GalleryInterface: NewGalleryInterface(t.StatusInfo, "github.com/famei/gofluent/components/widgets", parent)}
 	i.SetObjectName("statusInfoInterface")
 
 	tr := func(s string) string { return gallerycommon.Tr("StatusInfoInterface", s) }

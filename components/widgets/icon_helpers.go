@@ -21,12 +21,17 @@ func renderFluentIcon(icon interface{}, painter *qt.QPainter, rect *qt.QRectF, t
 
 // renderFluentIconWithFill renders a FluentIcon recolored to the given hex fill
 // color (the Go equivalent of FluentIcon.render(..., fill="#rrggbb")).
-func renderFluentIconWithFill(icon common.FluentIcon, painter *qt.QPainter, rect *qt.QRectF, fill string) {
-	raw := resources.IconSVG(string(icon), common.GetIconColor(common.ThemeAuto, false))
-	if len(raw) == 0 {
+func renderFluentIconWithFill(icon common.FluentIconBase, painter *qt.QPainter, rect *qt.QRectF, fill string) {
+	//raw := resources.IconSVG(string(icon), common.GetIconColor(common.ThemeAuto, false))
+	//if len(raw) == 0 {
+	//	return
+	//}
+	//common.DrawSvgIcon([]byte(common.RecolorSvg(string(raw), fill)), painter, rect)
+	if f, ok := icon.(common.SegoeFluentIcon); ok {
+		f.RenderGlyph(painter, rect, common.ThemeAuto, qt.NewQColor6(fill))
 		return
 	}
-	common.DrawSvgIcon([]byte(common.RecolorSvg(string(raw), fill)), painter, rect)
+	common.DrawIcon(icon, painter, rect)
 }
 
 // reversedTheme returns the theme that reverses the icon color (used by

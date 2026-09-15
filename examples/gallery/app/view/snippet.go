@@ -182,6 +182,8 @@ view.SetBorderVisible(true)`,
 pager := widgets.NewHorizontalPipsPager(parent)
 flipView.AddImages(images)
 pager.SetPageNumber(flipView.Count())`,
+	"acrylic/acrylic_opengl.go": `acrylic := acrylic.NewAcrylicOpenGLWidget(parent)
+acrylic.SetTintColor("#3c8cff59")`,
 }
 
 // codeSnippet returns the 3-8 line pseudo-code snippet for the given source

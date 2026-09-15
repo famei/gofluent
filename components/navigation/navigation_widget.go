@@ -748,7 +748,7 @@ func (w *navigationTreeItem) drawDropDownArrow() {
 	painter.Translate2(float64(w.Width()-20), 18)
 	painter.Rotate(w.arrowAngle)
 	rect := qt.NewQRectF4(-5, -5, 9.6, 9.6)
-	common.ArrowDown.Render(painter, rect, common.ThemeAuto)
+	common.ChevronDown.Render(painter, rect, common.ThemeAuto)
 	rect.Delete()
 	painter.End()
 }

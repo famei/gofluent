@@ -15,7 +15,7 @@ type DateTimeInterface struct {
 // NewDateTimeInterface builds the date time interface.
 func NewDateTimeInterface(parent *qt.QWidget) *DateTimeInterface {
 	t := gallerycommon.NewTranslator()
-	i := &DateTimeInterface{GalleryInterface: NewGalleryInterface(t.DateTime, "qfluentwidgets.components.time_picker", parent)}
+	i := &DateTimeInterface{GalleryInterface: NewGalleryInterface(t.DateTime, "github.com/famei/gofluent/components/date_time", parent)}
 	i.SetObjectName("dateTimeInterface")
 
 	tr := func(s string) string { return gallerycommon.Tr("DateTimeInterface", s) }

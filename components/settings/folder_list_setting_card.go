@@ -25,7 +25,7 @@ func NewFolderItem(folder string, parent *qt.QWidget) *FolderItem {
 	item := &FolderItem{QWidget: qt.NewQWidget(parent), folder: folder}
 	item.hBoxLayout = qt.NewQHBoxLayout(item.QWidget)
 	item.folderLabel = qt.NewQLabel5(folder, item.QWidget)
-	item.removeButton = widgets.NewToolButtonIcon(common.Close, item.QWidget)
+	item.removeButton = widgets.NewToolButtonIcon(common.Cancel, item.QWidget)
 
 	item.removeButton.SetFixedSize2(39, 29)
 	item.removeButton.SetIconSize(qt.NewQSize2(12, 12))
@@ -68,7 +68,7 @@ func NewFolderListSettingCard(configItem *common.ConfigItem, title, content, dir
 	c := &FolderListSettingCard{ExpandSettingCard: NewExpandSettingCard(common.Folder, title, content, parent)}
 	c.configItem = configItem
 	c.dialogDirectory = directory
-	c.addFolderButton = widgets.NewPushButtonIcon(common.FolderAdd, "Add folder", c.QWidget)
+	c.addFolderButton = widgets.NewPushButtonIcon(common.NewFolder, "Add folder", c.QWidget)
 
 	c.folders = append([]string(nil), asStringSlice(configItem.Value())...)
 	c.initWidget()

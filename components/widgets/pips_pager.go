@@ -20,13 +20,13 @@ const (
 // PipsScrollButton is the previous/next scroll button of a pips pager.
 type PipsScrollButton struct {
 	*qt.QToolButton
-	_icon     common.FluentIcon
+	_icon     common.FluentIconBase
 	isHover   bool
 	isPressed bool
 }
 
 // NewPipsScrollButton builds a pips scroll button.
-func NewPipsScrollButton(icon common.FluentIcon, parent *qt.QWidget) *PipsScrollButton {
+func NewPipsScrollButton(icon common.FluentIconBase, parent *qt.QWidget) *PipsScrollButton {
 	b := &PipsScrollButton{QToolButton: qt.NewQToolButton(parent), _icon: icon}
 	b.SetFixedSize2(12, 12)
 	b.installEvents()
@@ -240,13 +240,13 @@ func newPipsPager(orientation qt.Orientation, parent *qt.QWidget) *PipsPager {
 	if p.isHorizontal() {
 		p.SetFlow(qt.QListView__LeftToRight)
 		p.SetViewportMargins(15, 0, 15, 0)
-		p.preButton = NewPipsScrollButton(common.CareLeftSolid, p.QWidget)
-		p.nextButton = NewPipsScrollButton(common.CareRightSolid, p.QWidget)
+		p.preButton = NewPipsScrollButton(common.CaretSolidLeft, p.QWidget)
+		p.nextButton = NewPipsScrollButton(common.CaretSolidRight, p.QWidget)
 		p.SetFixedHeight(12)
 	} else {
 		p.SetViewportMargins(0, 15, 0, 15)
-		p.preButton = NewPipsScrollButton(common.CareUpSolid, p.QWidget)
-		p.nextButton = NewPipsScrollButton(common.CareDownSolid, p.QWidget)
+		p.preButton = NewPipsScrollButton(common.CaretSolidUp, p.QWidget)
+		p.nextButton = NewPipsScrollButton(common.CaretSolidDown, p.QWidget)
 		p.SetFixedWidth(12)
 	}
 

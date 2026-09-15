@@ -41,6 +41,8 @@ type MainWindow struct {
 	settingInterface        *SettingInterface
 	textInterface           *TextInterface
 	viewInterface           *ViewInterface
+
+	acrylicInterface *AcrylicInterface
 }
 
 // NewMainWindow builds the gallery main window.
@@ -94,6 +96,8 @@ func NewMainWindow() *MainWindow {
 	w.textInterface = NewTextInterface(w.QWidget)
 	w.viewInterface = NewViewInterface(w.QWidget)
 
+	w.acrylicInterface = NewAcrylicInterface(w.QWidget)
+
 	w.interfaces = []*GalleryInterface{
 		w.iconInterface.GalleryInterface,
 		w.basicInputInterface.GalleryInterface,
@@ -106,6 +110,7 @@ func NewMainWindow() *MainWindow {
 		w.statusInfoInterface.GalleryInterface,
 		w.textInterface.GalleryInterface,
 		w.viewInterface.GalleryInterface,
+		w.acrylicInterface.GalleryInterface,
 	}
 
 	w.connectSignalToSlot()
@@ -126,10 +131,10 @@ func (w *MainWindow) positionTitleBar() {
 }
 
 func (w *MainWindow) initWindow() {
-	w.Resize(960, 780)
+	w.Resize(986, 787)
 	w.SetMinimumWidth(760)
 	w.SetWindowIcon(resource.Icon("logo.png"))
-	w.SetWindowTitle("PyQt-Fluent-Widgets")
+	w.SetWindowTitle("gofluent")
 
 	w.SetMicaEffectEnabled(gallerycommon.ConfigInstance.Get(gallerycommon.ConfigInstance.MicaEnabled).(bool))
 
@@ -159,7 +164,9 @@ func (w *MainWindow) addSubInterface(widget *qt.QWidget, icon interface{}, text 
 	w.stackedWidget.AddWidget(widget)
 
 	routeKey := widget.ObjectName()
-	w.nav.AddItem(routeKey, icon, text, func(bool) { w.stackedWidget.SetCurrentWidget(widget, false) }, true, position, text, "")
+	w.nav.AddItem(routeKey, icon, text, func(bool) {
+		w.stackedWidget.SetCurrentWidget(widget, false)
+	}, true, position, text, "")
 
 	if w.stackedWidget.Count() == 1 {
 		w.stackedWidget.OnCurrentChanged(w.onCurrentInterfaceChanged)
@@ -184,19 +191,20 @@ func (w *MainWindow) initNavigation() {
 	w.nav.AddSeparator(navigation.NavigationItemPositionScroll)
 
 	pos := navigation.NavigationItemPositionScroll
-	w.addSubInterface(w.basicInputInterface.QWidget, gcommon.Checkbox, t.BasicInput, pos)
+	w.addSubInterface(w.basicInputInterface.QWidget, gcommon.CheckboxComposite, t.BasicInput, pos)
 	w.addSubInterface(w.dateTimeInterface.QWidget, gcommon.DateTime, t.DateTime, pos)
 	w.addSubInterface(w.dialogInterface.QWidget, gcommon.Message, t.Dialogs, pos)
-	w.addSubInterface(w.layoutInterface.QWidget, gcommon.Layout, t.Layout, pos)
+	w.addSubInterface(w.layoutInterface.QWidget, gcommon.ViewDashboard, t.Layout, pos)
 	w.addSubInterface(w.menuInterface.QWidget, gallerycommon.IconMenu, t.Menus, pos)
-	w.addSubInterface(w.navigationViewInterface.QWidget, gcommon.Menu, t.Navigation, pos)
-	w.addSubInterface(w.scrollInterface.QWidget, gcommon.Scroll, t.Scroll, pos)
-	w.addSubInterface(w.statusInfoInterface.QWidget, gcommon.Chat, t.StatusInfo, pos)
+	w.addSubInterface(w.navigationViewInterface.QWidget, gcommon.GlobalNavButton, t.Navigation, pos)
+	w.addSubInterface(w.scrollInterface.QWidget, gcommon.Sort, t.Scroll, pos)
+	w.addSubInterface(w.statusInfoInterface.QWidget, gcommon.ChatBubbles, t.StatusInfo, pos)
 	w.addSubInterface(w.textInterface.QWidget, gallerycommon.IconText, t.Text, pos)
 	w.addSubInterface(w.viewInterface.QWidget, gallerycommon.IconGrid, t.View, pos)
+	w.addSubInterface(w.acrylicInterface.QWidget, gcommon.Color, t.Material, pos)
 
 	w.nav.AddItem("price", gallerycommon.IconPrice, t.Price, func(bool) { w.onSupport() }, false, navigation.NavigationItemPositionBottom, t.Price, "")
-	w.addSubInterface(w.settingInterface.QWidget, gcommon.Setting, gallerycommon.Tr("MainWindow", "Settings"), navigation.NavigationItemPositionBottom)
+	w.addSubInterface(w.settingInterface.QWidget, gcommon.Settings, gallerycommon.Tr("MainWindow", "Settings"), navigation.NavigationItemPositionBottom)
 }
 
 func (w *MainWindow) onSupport() {

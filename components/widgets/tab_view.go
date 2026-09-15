@@ -52,7 +52,7 @@ type TabCloseButton struct{ *TabToolButton }
 
 // NewTabCloseButton builds a tab close button.
 func NewTabCloseButton(parent *qt.QWidget) *TabCloseButton {
-	w := &TabCloseButton{TabToolButton: newTabToolButton(common.Close, parent)}
+	w := &TabCloseButton{TabToolButton: newTabToolButton(common.Cancel, parent)}
 	w.SetCursor(qt.NewQCursor2(qt.PointingHandCursor))
 	w.SetIconSize(qt.NewQSize2(10, 10))
 	return w

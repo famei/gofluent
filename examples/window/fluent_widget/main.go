@@ -22,7 +22,7 @@ type Window struct {
 
 func newWindow() *Window {
 	w := &Window{FluentWidget: gfwindow.NewFluentWidget(nil)}
-	w.button = widgets.NewPushButtonIcon(common.Constract, "Toggle theme", w.QWidget)
+	w.button = widgets.NewPushButtonIcon(common.Light, "Toggle theme", w.QWidget)
 	w.vBoxLayout = qt.NewQVBoxLayout(w.QWidget)
 
 	// toggle theme when the button is clicked

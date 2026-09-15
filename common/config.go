@@ -457,7 +457,7 @@ func (c *QConfig) extraItemSnapshot() []*ConfigItem {
 func (c *QConfig) Get(item *ConfigItem) interface{} { return item.Value() }
 
 // Set stores a value on a config item and, when save is true, persists the
-// whole config to disk. Setting themeMode/themeColor also emits the matching
+// whole config to disk. Settings themeMode/themeColor also emits the matching
 // signals.
 func (c *QConfig) Set(item *ConfigItem, value interface{}, save bool) {
 	if configEqual(item.Value(), value) {

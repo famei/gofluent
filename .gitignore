@@ -1,3 +1,4 @@
 *.exe
 .*
+build_all_examples.log
 !.gitignore

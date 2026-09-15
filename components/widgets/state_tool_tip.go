@@ -51,7 +51,7 @@ func (w *StateCloseButton) installEvents() {
 		}
 		rect := qt.NewQRectF5(w.Rect())
 		defer rect.Delete()
-		common.Close.Render(painter, rect, reversedTheme())
+		common.Cancel.Render(painter, rect, reversedTheme())
 		painter.End()
 	})
 }

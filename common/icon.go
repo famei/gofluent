@@ -82,7 +82,9 @@ type FluentIconBase interface {
 // (the same string used by the SVG filenames).
 type FluentIcon string
 
+/*
 const (
+
 	Up                   FluentIcon = "Up"
 	Add                  FluentIcon = "Add"
 	Bus                  FluentIcon = "Bus"
@@ -258,38 +260,13 @@ const (
 	ChevronRightMed      FluentIcon = "ChevronRightMed"
 	EmojiTabSymbols      FluentIcon = "EmojiTabSymbols"
 	ExpressiveInputEntry FluentIcon = "ExpressiveInputEntry"
-)
 
-// AllFluentIcons returns every FluentIcon in declaration order (the Go
-// equivalent of Python's FluentIcon._member_map_.values()).
-func AllFluentIcons() []FluentIcon {
-	return []FluentIcon{
-		Up, Add, Bus, Car, Cut, Iot, Pin, Tag, Vpn, Cafe, Chat, Copy, Code, Down,
-		Edit, Flag, Font, Game, Help, Hide, Home, Info, Leaf, Link, Mail, Menu,
-		Mute, More, Move, Play, Save, Send, Sync, Unit, View, Wifi, Zoom, Album,
-		Brush, Broom, Close, Cloud, Embed, Globe, Heart, Label, Media, Movie,
-		Music, Robot, Pause, Paste, Photo, Phone, Print, Share, Tiles, Unpin,
-		Video, Train, AddTo, Accept, Camera, Cancel, Delete, Folder, Filter,
-		Market, Scroll, Layout, GitHub, Update, Remove, Return, People, QRCode,
-		Ringer, Rotate, Search, Volume, Frigid, SaveAs, ZoomIn, Connect, History,
-		Setting, Palette, Message, FitPage, ZoomOut, Airplane, Asterisk, Calories,
-		Calendar, Feedback, Library, Minimize, Checkbox, Document, Language,
-		Download, Question, Speakers, DateTime, FontSize, HomeFill, PageLeft,
-		SaveCopy, SendFill, SkipBack, SpeedOff, Alignment, Bluetooth, Completed,
-		Constract, Headphone, Megaphone, Projector, Education, LeftArrow,
-		EraseTool, PageRight, PlaySolid, BookShelf, Highlight, FolderAdd,
-		PauseBold, PencilInk, PieSingle, QuickNote, SpeedHigh, StopWatch,
-		ZipFolder, Basketball, Brightness, Dictionary, Microphone, ArrowDown,
-		FullScreen, MixVolumes, RemoveFrom, RightArrow, QuietHours, Fingerprint,
-		Application, Certificate, Transparent, ImageExport, SpeedMedium,
-		LibraryFill, MusicFolder, PowerButton, SkipForward, CareUpSolid,
-		AcceptMedium, CancelMedium, ChevronRight, ClippingTool, SearchMirror,
-		ShoppingCart, FontIncrease, BackToWindow, CommandPrompt, CloudDownload,
-		DictionaryAdd, CareDownSolid, CareLeftSolid, ClearSelection,
-		DeveloperTools, BackgroundFill, CareRightSolid, ChevronDownMed,
-		ChevronRightMed, EmojiTabSymbols, ExpressiveInputEntry,
-	}
-}
+)
+*/
+
+const (
+	GitHub FluentIcon = "GitHub"
+)
 
 // Path returns the logical Qt resource path for the icon.
 func (f FluentIcon) Path(theme Theme) string {
@@ -308,8 +285,8 @@ func (f FluentIcon) Icon(theme Theme) *qt.QIcon {
 
 // IconWithColor returns a QIcon whose SVG fill attribute is set to color.
 func (f FluentIcon) IconWithColor(theme Theme, color *qt.QColor) *qt.QIcon {
-	svg := RecolorSvg(string(f.svgBytes(theme)), color.Name())
-	return svgBytesToIcon([]byte(svg))
+	recolorSvg := RecolorSvg(string(f.svgBytes(theme)), color.Name())
+	return svgBytesToIcon([]byte(recolorSvg))
 }
 
 // Colored returns an icon recolored for light/dark mode.
@@ -339,8 +316,12 @@ func (c *ColoredFluentIcon) Path(theme Theme) string { return c.fluentIcon.Path(
 
 // Icon returns a recolored QIcon.
 func (c *ColoredFluentIcon) Icon(theme Theme) *qt.QIcon {
-	svgBytes := c.svgBytes(theme)
-	return svgBytesToIcon(svgBytes)
+	//svgBytes := c.svgBytes(theme)
+	//return svgBytesToIcon(svgBytes)
+	if f, ok := c.fluentIcon.(SegoeFluentIcon); ok {
+		return f.renderIcon(theme, c.color(theme))
+	}
+	return c.fluentIcon.Icon(theme)
 }
 
 func (c *ColoredFluentIcon) color(theme Theme) *qt.QColor {
@@ -366,9 +347,14 @@ func (c *ColoredFluentIcon) Colored(light, dark *qt.QColor) *ColoredFluentIcon {
 
 // Render draws the recolored icon into a painter.
 func (c *ColoredFluentIcon) Render(painter *qt.QPainter, rect *qt.QRectF, theme Theme) {
-	if b := c.svgBytes(theme); len(b) > 0 {
-		DrawSvgIcon(b, painter, rect)
+	//if b := c.svgBytes(theme); len(b) > 0 {
+	//	DrawSvgIcon(b, painter, rect)
+	//}
+	if f, ok := c.fluentIcon.(SegoeFluentIcon); ok {
+		f.RenderGlyph(painter, rect, theme, c.color(theme))
+		return
 	}
+	c.fluentIcon.Render(painter, rect, theme)
 }
 
 // QIcon returns a theme-following recolored QIcon.
@@ -539,6 +525,20 @@ func NewActionFluentIcon(icon FluentIconBase, text string, parent *qt.QObject) *
 		}
 		a.QAction.SetIcon(icon.Icon(ThemeAuto))
 	})
+
+	// When the action is checkable, re-render the icon with the reversed color
+	// on toggle so the checked (highlighted) state uses the inverted icon (e.g.
+	// white on the accent background instead of black). OnToggled only fires for
+	// checkable actions, so this is a no-op otherwise.
+	a.QAction.OnToggled(func(checked bool) {
+		if destroyed {
+			return
+		}
+		if a.fluentIcon != nil {
+			a.QAction.SetIcon(a.fluentIcon.QIcon(checked))
+		}
+	})
+
 	return a
 }
 

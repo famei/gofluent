@@ -30,6 +30,9 @@ var Images embed.FS
 //go:embed all:i18n
 var I18n embed.FS
 
+//go:embed "Segoe Fluent Icons.ttf"
+var SegoeFluentIcons []byte
+
 // QSS returns the raw content of a stylesheet for the given theme and name.
 // theme must be "light" or "dark" and name must not contain the ".qss" suffix,
 // e.g. QSS("light", "button").

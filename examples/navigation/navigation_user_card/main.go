@@ -79,12 +79,12 @@ func (w *Window) initNavigation() {
 	)
 
 	w.AddSubInterface(w.homeInterface.QWidget, common.Home, "Home", navigation.NavigationItemPositionTop, nil, false)
-	w.AddSubInterface(w.musicInterface.QWidget, common.Music, "Music library", navigation.NavigationItemPositionTop, nil, false)
+	w.AddSubInterface(w.musicInterface.QWidget, common.Audio, "Music library", navigation.NavigationItemPositionTop, nil, false)
 
 	w.NavigationInterface().AddSeparator(navigation.NavigationItemPositionScroll)
 
 	w.AddSubInterface(w.videoInterface.QWidget, common.Video, "Video library", navigation.NavigationItemPositionScroll, nil, false)
-	w.AddSubInterface(w.settingInterface.QWidget, common.Setting, "Settings", navigation.NavigationItemPositionBottom, nil, false)
+	w.AddSubInterface(w.settingInterface.QWidget, common.Settings, "Settings", navigation.NavigationItemPositionBottom, nil, false)
 
 	w.NavigationInterface().SetUpdateIndicatorPosOnCollapseFinished(true)
 }

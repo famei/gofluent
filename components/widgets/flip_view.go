@@ -12,7 +12,7 @@ import (
 // driven by a frame-based ProgressAnimation (see ANIMATION_GUIDE §5.2).
 type FlipScrollButton struct {
 	*qt.QToolButton
-	_icon     common.FluentIcon
+	_icon     common.FluentIconBase
 	_opacity  float64
 	isHover   bool
 	isPressed bool
@@ -20,7 +20,7 @@ type FlipScrollButton struct {
 }
 
 // NewFlipScrollButton builds a flip scroll button.
-func NewFlipScrollButton(icon common.FluentIcon, parent *qt.QWidget) *FlipScrollButton {
+func NewFlipScrollButton(icon common.FluentIconBase, parent *qt.QWidget) *FlipScrollButton {
 	b := &FlipScrollButton{QToolButton: qt.NewQToolButton(parent), _icon: icon}
 	b.installEvents()
 	return b
@@ -219,14 +219,14 @@ func newFlipView(orientation qt.Orientation, parent *qt.QWidget) *FlipView {
 
 	if f.IsHorizontal() {
 		f.SetFlow(qt.QListView__LeftToRight)
-		f.preButton = NewFlipScrollButton(common.CareLeftSolid, f.QWidget)
-		f.nextButton = NewFlipScrollButton(common.CareRightSolid, f.QWidget)
+		f.preButton = NewFlipScrollButton(common.CaretSolidLeft, f.QWidget)
+		f.nextButton = NewFlipScrollButton(common.CaretSolidRight, f.QWidget)
 		f.preButton.SetFixedSize2(16, 38)
 		f.nextButton.SetFixedSize2(16, 38)
 	} else {
 		f.SetFlow(qt.QListView__TopToBottom)
-		f.preButton = NewFlipScrollButton(common.CareUpSolid, f.QWidget)
-		f.nextButton = NewFlipScrollButton(common.CareDownSolid, f.QWidget)
+		f.preButton = NewFlipScrollButton(common.CaretSolidUp, f.QWidget)
+		f.nextButton = NewFlipScrollButton(common.CaretSolidDown, f.QWidget)
 		f.preButton.SetFixedSize2(38, 16)
 		f.nextButton.SetFixedSize2(38, 16)
 	}

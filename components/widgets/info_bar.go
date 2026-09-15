@@ -180,7 +180,7 @@ func NewInfoBar(icon interface{}, title, content string, orient qt.Orientation, 
 
 	b.titleLabel = qt.NewQLabel(b.QWidget)
 	b.contentLabel = qt.NewQLabel(b.QWidget)
-	b.closeButton = NewTransparentToolButtonIcon(common.Close, b.QWidget).QToolButton
+	b.closeButton = NewTransparentToolButtonIcon(common.Cancel, b.QWidget).QToolButton
 	b.iconWidget = NewInfoIconWidget(icon, nil)
 
 	b.opacityEffect = qt.NewQGraphicsOpacityEffect2(b.QObject)

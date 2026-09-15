@@ -1241,8 +1241,8 @@ In that case, I would accept it no matter which side the ball falls on.</source>
     </message>
     <message>
         <location filename="../../view/setting_interface.py" line="119"/>
-        <source>Discover new features and learn useful tips about PyQt-Fluent-Widgets</source>
-        <translation>髮現新功能並了解有關 PyQt-Fluent-Widgets 的使用技巧</translation>
+        <source>Discover new features and learn useful tips about gofluent</source>
+        <translation>髮現新功能並了解有關 gofluent 的使用技巧</translation>
     </message>
     <message>
         <location filename="../../view/setting_interface.py" line="128"/>
@@ -1251,8 +1251,8 @@ In that case, I would accept it no matter which side the ball falls on.</source>
     </message>
     <message>
         <location filename="../../view/setting_interface.py" line="128"/>
-        <source>Help us improve PyQt-Fluent-Widgets by providing feedback</source>
-        <translation>通過提供反饋幫助我們改進 PyQt-Fluent-Widgets</translation>
+        <source>Help us improve gofluent by providing feedback</source>
+        <translation>通過提供反饋幫助我們改進 gofluent</translation>
     </message>
     <message>
         <location filename="../../view/setting_interface.py" line="135"/>

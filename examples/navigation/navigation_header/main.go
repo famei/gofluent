@@ -68,10 +68,10 @@ func (w *Window) initNavigation() {
 	// data group
 	w.navigationInterface.AddItemHeader("Data", navigation.NavigationItemPositionScroll)
 	w.addInterface("table", common.Document, "Table", navigation.NavigationItemPositionScroll)
-	w.addInterface("list", common.Menu, "List", navigation.NavigationItemPositionScroll)
+	w.addInterface("list", common.GlobalNavButton, "List", navigation.NavigationItemPositionScroll)
 
 	// settings
-	w.addInterface("settings", common.Setting, "Settings", navigation.NavigationItemPositionBottom)
+	w.addInterface("settings", common.Settings, "Settings", navigation.NavigationItemPositionBottom)
 
 	// default
 	w.stackedWidget.SetCurrentIndex(0)

@@ -20,7 +20,7 @@ type NavigationViewInterface struct {
 // NewNavigationViewInterface builds the navigation view interface.
 func NewNavigationViewInterface(parent *qt.QWidget) *NavigationViewInterface {
 	t := gallerycommon.NewTranslator()
-	i := &NavigationViewInterface{GalleryInterface: NewGalleryInterface(t.Navigation, "qfluentwidgets.components.navigation", parent)}
+	i := &NavigationViewInterface{GalleryInterface: NewGalleryInterface(t.Navigation, "github.com/famei/gofluent/components/navigation", parent)}
 	i.SetObjectName("navigationViewInterface")
 
 	breadcrumb := navigation.NewBreadcrumbBar(i.QWidget)
@@ -58,9 +58,9 @@ func NewNavigationViewInterface(parent *qt.QWidget) *NavigationViewInterface {
 
 func (i *NavigationViewInterface) createToggleToolWidget() *qt.QWidget {
 	w := navigation.NewSegmentedToggleToolWidget(i.QWidget)
-	w.AddItem("k1", gcommon.Transparent, nil)
+	w.AddItem("k1", gcommon.SquareSparkle, nil)
 	w.AddItem("k2", gcommon.Checkbox, nil)
-	w.AddItem("k3", gcommon.Constract, nil)
+	w.AddItem("k3", gcommon.Light, nil)
 	w.SetCurrentItem("k1")
 	return w.QWidget
 }

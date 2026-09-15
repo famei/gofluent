@@ -54,7 +54,7 @@ func newWindow() *Window {
 	w.initLayout()
 
 	w.addSubInterface(searchInterface, common.Search, "Search", navigation.NavigationItemPositionTop)
-	w.addSubInterface(musicInterface, common.Music, "Music library", navigation.NavigationItemPositionTop)
+	w.addSubInterface(musicInterface, common.Audio, "Music library", navigation.NavigationItemPositionTop)
 	w.addSubInterface(videoInterface, common.Video, "Video library", navigation.NavigationItemPositionTop)
 
 	w.navigationInterface.AddSeparator(navigation.NavigationItemPositionTop)
@@ -65,7 +65,7 @@ func newWindow() *Window {
 	avatar := navigation.NewNavigationAvatarWidget("zhiyiYo", asset.QImage(resFS, "resource/shoko.png"), w.QWidget)
 	w.navigationInterface.AddWidget("avatar", avatar, func(bool) { w.showMessageBox() }, navigation.NavigationItemPositionBottom, "", "")
 
-	w.addSubInterface(settingInterface, common.Setting, "Settings", navigation.NavigationItemPositionBottom)
+	w.addSubInterface(settingInterface, common.Settings, "Settings", navigation.NavigationItemPositionBottom)
 
 	//!IMPORTANT: set the default route key because the return button is enabled.
 	common.RouterInstance.SetDefaultRouteKey(w.stackWidget, musicInterface.ObjectName())

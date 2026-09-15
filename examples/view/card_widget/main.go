@@ -109,7 +109,7 @@ func newAppCard(icon interface{}, title, content string, parent *qt.QWidget) *ap
 func (c *appCard) onMoreButtonClicked() {
 	menu := widgets.NewRoundMenu("", c.QWidget)
 	menu.AddAction(common.NewActionFluentIcon(common.Share, "共享", c.QObject).QAction)
-	menu.AddAction(common.NewActionFluentIcon(common.Chat, "写评论", c.QObject).QAction)
+	menu.AddAction(common.NewActionFluentIcon(common.ChatBubbles, "写评论", c.QObject).QAction)
 	menu.AddAction(common.NewActionFluentIcon(common.Pin, "固定到任务栏", c.QObject).QAction)
 
 	x := (c.moreButton.Width()-menu.Width())/2 + 10

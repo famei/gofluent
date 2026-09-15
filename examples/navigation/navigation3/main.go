@@ -34,7 +34,7 @@ type NavigationBar struct {
 func newNavigationBar(parent *qt.QWidget) *NavigationBar {
 	b := &NavigationBar{QWidget: qt.NewQWidget(parent)}
 	b.hBoxLayout = qt.NewQHBoxLayout(b.QWidget)
-	b.menuButton = navigation.NewNavigationToolButton(common.Menu, b.QWidget)
+	b.menuButton = navigation.NewNavigationToolButton(common.GlobalNavButton, b.QWidget)
 	// The Python reference parents the pop-out panel to the window (parent),
 	// not to the NavigationBar, so `navigationPanel.move(0, 31)` positions it
 	// relative to the window's top-left. Parent it the same way here, otherwise
@@ -136,13 +136,13 @@ func newWindow() *Window {
 	w.initLayout()
 
 	w.addSubInterface(searchInterface, common.Search, "Search", navigation.NavigationItemPositionTop)
-	w.addSubInterface(musicInterface, common.Music, "Music library", navigation.NavigationItemPositionTop)
+	w.addSubInterface(musicInterface, common.Audio, "Music library", navigation.NavigationItemPositionTop)
 	w.addSubInterface(videoInterface, common.Video, "Video library", navigation.NavigationItemPositionTop)
 
 	w.navigationInterface.addSeparator(navigation.NavigationItemPositionTop)
 
 	w.addSubInterface(folderInterface, common.Folder, "Folder library", navigation.NavigationItemPositionScroll)
-	w.addSubInterface(settingInterface, common.Setting, "Settings", navigation.NavigationItemPositionBottom)
+	w.addSubInterface(settingInterface, common.Settings, "Settings", navigation.NavigationItemPositionBottom)
 
 	w.stackWidget.OnCurrentChanged(w.onCurrentInterfaceChanged)
 	w.stackWidget.SetCurrentIndex(1)

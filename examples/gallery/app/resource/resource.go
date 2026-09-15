@@ -9,6 +9,7 @@ package resource
 
 import (
 	"embed"
+	"encoding/json"
 	"io/fs"
 
 	"github.com/famei/gofluent/examples/internal/asset"
@@ -55,4 +56,25 @@ func Translation(localeName string) []byte {
 		return nil
 	}
 	return b
+}
+
+// IconsDataByte use https://github.com/microsoft/WinUI-Gallery/blob/main/WinUIGallery/Samples/Iconography/IconsData.json
+//
+//go:embed IconsData.json
+var IconsDataByte []byte
+
+type IconsData []struct {
+	Code              string   `json:"Code"`
+	Name              string   `json:"Name"`
+	Tags              []string `json:"Tags"`
+	IsSegoeFluentOnly bool     `json:"IsSegoeFluentOnly,omitempty"`
+}
+
+func GetIconsData() IconsData {
+	var data IconsData
+	err := json.Unmarshal(IconsDataByte, &data)
+	if err != nil {
+		panic(err)
+	}
+	return data
 }

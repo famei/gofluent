@@ -16,7 +16,7 @@ type LayoutInterface struct {
 // NewLayoutInterface builds the layout interface.
 func NewLayoutInterface(parent *qt.QWidget) *LayoutInterface {
 	t := gallerycommon.NewTranslator()
-	i := &LayoutInterface{GalleryInterface: NewGalleryInterface(t.Layout, "qfluentwidgets.components.layout", parent)}
+	i := &LayoutInterface{GalleryInterface: NewGalleryInterface(t.Layout, "github.com/famei/gofluent/components/layout", parent)}
 	i.SetObjectName("layoutInterface")
 
 	tr := func(s string) string { return gallerycommon.Tr("LayoutInterface", s) }

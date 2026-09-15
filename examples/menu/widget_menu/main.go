@@ -119,7 +119,7 @@ func (w *Demo) showContextMenu(e *qt.QContextMenuEvent) {
 	menu.AddAction(common.NewActionFluentIcon(common.ShoppingCart, "支付方式", nil).QAction)
 	menu.AddAction(common.NewActionFluentIcon(common.Code, "兑换代码和礼品卡", nil).QAction)
 	menu.AddSeparator()
-	menu.AddAction(common.NewActionFluentIcon(common.Setting, "设置", nil).QAction)
+	menu.AddAction(common.NewActionFluentIcon(common.Settings, "设置", nil).QAction)
 
 	pos := e.GlobalPos()
 	menu.Exec(pos, widgets.MenuAnimationDropDown)

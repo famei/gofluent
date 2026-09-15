@@ -127,7 +127,7 @@ func (b *ExpandButton) paint() {
 	painter.Rotate(b.angle)
 	rect := qt.NewQRectF4(-5, -5, 9.6, 9.6)
 	defer rect.Delete()
-	common.ArrowDown.Render(painter, rect, common.ThemeAuto)
+	common.ChevronDown.Render(painter, rect, common.ThemeAuto)
 	painter.End()
 }
 

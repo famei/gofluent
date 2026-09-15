@@ -91,16 +91,15 @@ func (LanguageSerializer) Deserialize(value interface{}) interface{} {
 
 // Application metadata (port of app/common/config.py module constants).
 const (
-	YEAR           = 2023
-	AUTHOR         = "zhiyiYo"
-	VERSION        = "1.7.5"
-	HELP_URL       = "https://qfluentwidgets.com"
-	REPO_URL       = "https://github.com/zhiyiYo/PyQt-Fluent-Widgets"
-	EXAMPLE_URL    = "https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/master/examples"
-	FEEDBACK_URL   = "https://github.com/zhiyiYo/PyQt-Fluent-Widgets/issues"
-	RELEASE_URL    = "https://github.com/zhiyiYo/PyQt-Fluent-Widgets/releases/latest"
-	ZH_SUPPORT_URL = "https://qfluentwidgets.com/zh/price/"
-	EN_SUPPORT_URL = "https://qfluentwidgets.com/price/"
+	YEAR           = 2026
+	AUTHOR         = "famei"
+	VERSION        = "0.1.0"
+	HELP_URL       = "https://github.com/famei/gofluent/tree/main/docs"
+	REPO_URL       = "https://github.com/famei/gofluent"
+	EXAMPLE_URL    = "https://github.com/famei/gofluent/tree/main/examples"
+	FEEDBACK_URL   = "https://github.com/famei/gofluent/issues"
+	ZH_SUPPORT_URL = "https://github.com/famei/gofluent"
+	EN_SUPPORT_URL = "https://github.com/famei/gofluent"
 )
 
 // IsWin11 reports whether the host is Windows 11 (build >= 22000). The build

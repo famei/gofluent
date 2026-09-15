@@ -24,7 +24,7 @@ type DialogInterface struct {
 // NewDialogInterface builds the dialog interface.
 func NewDialogInterface(parent *qt.QWidget) *DialogInterface {
 	t := gallerycommon.NewTranslator()
-	i := &DialogInterface{GalleryInterface: NewGalleryInterface(t.Dialogs, "qfluentwidgets.components.dialog_box", parent)}
+	i := &DialogInterface{GalleryInterface: NewGalleryInterface(t.Dialogs, "github.com/famei/gofluent/components/dialog_box", parent)}
 	i.SetObjectName("dialogInterface")
 
 	tr := func(s string) string { return gallerycommon.Tr("DialogInterface", s) }

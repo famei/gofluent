@@ -9,12 +9,12 @@ import (
 // self-draws the chevron icon.
 type CycleScrollButton struct {
 	*qt.QToolButton
-	_icon     common.FluentIcon
+	_icon     common.FluentIconBase
 	isPressed bool
 }
 
 // NewCycleScrollButton builds a cycle scroll button.
-func NewCycleScrollButton(icon common.FluentIcon, parent *qt.QWidget) *CycleScrollButton {
+func NewCycleScrollButton(icon common.FluentIconBase, parent *qt.QWidget) *CycleScrollButton {
 	b := &CycleScrollButton{QToolButton: qt.NewQToolButton(parent), _icon: icon}
 	b.SetObjectName("scrollButton")
 	b.SetStyleSheet(scrollButtonStyleSheet())
@@ -100,8 +100,8 @@ func NewCycleListWidget(items []string, itemSize *qt.QSize, align int, parent *q
 	common.SetFont(w.QWidget, 14, int(qt.QFont__Normal))
 	w.itemSize = qt.NewQSize2(itemSize.Width(), itemSize.Height())
 	w.align = align
-	w.upButton = NewCycleScrollButton(common.CareUpSolid, w.QWidget)
-	w.downButton = NewCycleScrollButton(common.CareDownSolid, w.QWidget)
+	w.upButton = NewCycleScrollButton(common.CaretSolidUp, w.QWidget)
+	w.downButton = NewCycleScrollButton(common.CaretSolidDown, w.QWidget)
 	w.scrollDuration = 250
 	w.originItems = append([]string{}, items...)
 	w.visibleNumber = 9

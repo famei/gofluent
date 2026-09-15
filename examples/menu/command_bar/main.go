@@ -56,11 +56,11 @@ func newDemo1() *Demo1 {
 	w.commandBar.AddWidget(w.dropDownButton.QWidget)
 
 	// add hidden actions
-	sortAct := common.NewActionFluentIcon(common.Scroll, "Sort", nil)
+	sortAct := common.NewActionFluentIcon(common.Sort, "Sort", nil)
 	sortAct.OnTriggered(func() { fmt.Println("排序") })
 	w.commandBar.AddHiddenAction(sortAct.QAction)
 
-	settingsAct := common.NewActionFluentIcon(common.Setting, "Settings", nil)
+	settingsAct := common.NewActionFluentIcon(common.Settings, "Settings", nil)
 	settingsAct.SetShortcut(qt.NewQKeySequence2("Ctrl+S"))
 	w.commandBar.AddHiddenAction(settingsAct.QAction)
 
@@ -86,7 +86,7 @@ func (w *Demo1) onEdit(isChecked bool) {
 }
 
 func (w *Demo1) createDropDownButton() *widgets.TransparentDropDownPushButton {
-	button := widgets.NewTransparentDropDownPushButtonIcon(common.Menu, "Menu", w.QWidget)
+	button := widgets.NewTransparentDropDownPushButtonIcon(common.GlobalNavButton, "Menu", w.QWidget)
 	button.SetFixedHeight(34)
 	common.SetFont(button.QWidget, 12, int(qt.QFont__Normal))
 
@@ -141,7 +141,7 @@ func (w *Demo2) showCommandBar() {
 	appAct.SetShortcut(qt.NewQKeySequence2("Ctrl+A"))
 	view.bar.AddHiddenAction(appAct.QAction)
 
-	settingsAct := common.NewActionFluentIcon(common.Setting, "Settings", nil)
+	settingsAct := common.NewActionFluentIcon(common.Settings, "Settings", nil)
 	settingsAct.SetShortcut(qt.NewQKeySequence2("Ctrl+S"))
 	view.bar.AddHiddenAction(settingsAct.QAction)
 

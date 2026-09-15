@@ -51,7 +51,7 @@ func (w *Window) initNavigation() {
 	)
 	w.NavigationInterface().AddItem(
 		"settingInterface",
-		common.Setting,
+		common.Settings,
 		"设置",
 		nil,
 		true,

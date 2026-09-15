@@ -69,7 +69,7 @@ func newDemo() *qt.QWidget {
 	vBoxLayout.AddLayout(hBoxLayout3.QLayout)
 
 	// Using an InfoBadge anchored to another control.
-	button := widgets.NewToolButtonIcon(common.Basketball, w)
+	button := widgets.NewToolButtonIcon(common.LeafTwo, w)
 	vBoxLayout.AddWidget3(button.QWidget, 0, qt.AlignHCenter)
 	widgets.InfoBadgeMake(1, w, widgets.InfoLevelSuccess, button.QWidget, widgets.InfoBadgePositionTopRight)
 

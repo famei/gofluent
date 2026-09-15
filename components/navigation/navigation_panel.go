@@ -127,8 +127,8 @@ func NewNavigationPanel(parent *qt.QWidget, isMinimalEnabled bool) *NavigationPa
 	p.scrollArea = widgets.NewScrollArea(p.QWidget)
 	p.scrollWidget = qt.NewQWidget2()
 
-	p.menuButton = NewNavigationToolButton(common.Menu, p.QWidget)
-	p.returnButton = NewNavigationToolButton(common.Return, p.QWidget)
+	p.menuButton = NewNavigationToolButton(common.GlobalNavButton, p.QWidget)
+	p.returnButton = NewNavigationToolButton(common.Back, p.QWidget)
 
 	p.vBoxLayout = qt.NewQVBoxLayout(p.QWidget)
 	p.topLayout = newNavigationItemLayout(nil)

@@ -60,17 +60,17 @@ func NewSettingInterface(parent *qt.QWidget) *SettingInterface {
 
 	i.personalGroup = settings.NewSettingCardGroup(gallerycommon.Tr("SettingInterface", "Personalization"), i.scrollWidget)
 	i.micaCard = settings.NewSwitchSettingCard(
-		gcommon.Transparent, gallerycommon.Tr("SettingInterface", "Mica effect"),
+		gcommon.SquareSparkle, gallerycommon.Tr("SettingInterface", "Mica effect"),
 		gallerycommon.Tr("SettingInterface", "Apply semi transparent to windows and surfaces"),
 		cfg.MicaEnabled, i.personalGroup.QWidget)
 	i.themeCard = settings.NewOptionsSettingCard(
-		cfg.ThemeMode(), gcommon.Brush,
+		cfg.ThemeMode(), gcommon.Eyedropper,
 		gallerycommon.Tr("SettingInterface", "Application theme"),
 		gallerycommon.Tr("SettingInterface", "Change the appearance of your application"),
 		[]string{gallerycommon.Tr("SettingInterface", "Light"), gallerycommon.Tr("SettingInterface", "Dark"),
 			gallerycommon.Tr("SettingInterface", "Use system setting")}, i.personalGroup.QWidget)
 	i.themeColorCard = settings.NewCustomColorSettingCard(
-		cfg.ThemeColor(), gcommon.Palette, gallerycommon.Tr("SettingInterface", "Theme color"),
+		cfg.ThemeColor(), gcommon.Color, gallerycommon.Tr("SettingInterface", "Theme color"),
 		gallerycommon.Tr("SettingInterface", "Change the theme color of you application"),
 		i.personalGroup.QWidget, false)
 	i.zoomCard = settings.NewOptionsSettingCard(
@@ -79,19 +79,19 @@ func NewSettingInterface(parent *qt.QWidget) *SettingInterface {
 		[]string{"100%", "125%", "150%", "175%", "200%",
 			gallerycommon.Tr("SettingInterface", "Use system setting")}, i.personalGroup.QWidget)
 	i.languageCard = settings.NewComboBoxSettingCard(
-		cfg.Language, gcommon.Language, gallerycommon.Tr("SettingInterface", "Language"),
+		cfg.Language, gcommon.LocaleLanguage, gallerycommon.Tr("SettingInterface", "Language"),
 		gallerycommon.Tr("SettingInterface", "Set your preferred language for UI"),
 		[]string{"简体中文", "繁體中文", "English",
 			gallerycommon.Tr("SettingInterface", "Use system setting")}, i.personalGroup.QWidget)
 
 	i.materialGroup = settings.NewSettingCardGroup(gallerycommon.Tr("SettingInterface", "Material"), i.scrollWidget)
 	i.blurRadiusCard = settings.NewRangeSettingCard(
-		cfg.BlurRadius, gcommon.Album, gallerycommon.Tr("SettingInterface", "Acrylic blur radius"),
+		cfg.BlurRadius, gcommon.MusicAlbum, gallerycommon.Tr("SettingInterface", "Acrylic blur radius"),
 		gallerycommon.Tr("SettingInterface", "The greater the radius, the more blurred the image"), i.materialGroup.QWidget)
 
 	i.updateSoftwareGroup = settings.NewSettingCardGroup(gallerycommon.Tr("SettingInterface", "Software update"), i.scrollWidget)
 	i.updateOnStartUpCard = settings.NewSwitchSettingCard(
-		gcommon.Update, gallerycommon.Tr("SettingInterface", "Check for updates when the application starts"),
+		gcommon.Sync, gallerycommon.Tr("SettingInterface", "Check for updates when the application starts"),
 		gallerycommon.Tr("SettingInterface", "The new version will be more stable and have more features"),
 		cfg.CheckUpdateAtStartUp, i.updateSoftwareGroup.QWidget)
 
@@ -99,12 +99,12 @@ func NewSettingInterface(parent *qt.QWidget) *SettingInterface {
 	i.helpCard = settings.NewHyperlinkCard(
 		gallerycommon.HELP_URL, gallerycommon.Tr("SettingInterface", "Open help page"),
 		gcommon.Help, gallerycommon.Tr("SettingInterface", "Help"),
-		gallerycommon.Tr("SettingInterface", "Discover new features and learn useful tips about PyQt-Fluent-Widgets"),
+		gallerycommon.Tr("SettingInterface", "Discover new features and learn useful tips about gofluent"),
 		i.aboutGroup.QWidget)
 	i.feedbackCard = settings.NewPrimaryPushSettingCard(
 		gallerycommon.Tr("SettingInterface", "Provide feedback"), gcommon.Feedback,
 		gallerycommon.Tr("SettingInterface", "Provide feedback"),
-		gallerycommon.Tr("SettingInterface", "Help us improve PyQt-Fluent-Widgets by providing feedback"),
+		gallerycommon.Tr("SettingInterface", "Help us improve gofluent by providing feedback"),
 		i.aboutGroup.QWidget)
 	aboutContent := "© " + gallerycommon.Tr("SettingInterface", "Copyright") + " " + strconv.Itoa(gallerycommon.YEAR) + ", " + gallerycommon.AUTHOR + ". " +
 		gallerycommon.Tr("SettingInterface", "Version") + " " + gallerycommon.VERSION

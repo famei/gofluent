@@ -60,15 +60,15 @@ func newWindow() *Window {
 	w.initLayout()
 
 	w.addSubInterface(searchInterface, common.Search, "Search", navigation.NavigationItemPositionTop, nil)
-	w.addSubInterface(musicInterface, common.Music, "Music library", navigation.NavigationItemPositionTop, nil)
+	w.addSubInterface(musicInterface, common.Audio, "Music library", navigation.NavigationItemPositionTop, nil)
 	w.addSubInterface(videoInterface, common.Video, "Video library", navigation.NavigationItemPositionTop, nil)
 
 	w.navigationInterface.AddSeparator(navigation.NavigationItemPositionTop)
 
-	w.addSubInterface(albumInterface, common.Album, "Albums", navigation.NavigationItemPositionScroll, nil)
-	w.addSubInterface(albumInterface1, common.Album, "Album 1", navigation.NavigationItemPositionTop, albumInterface)
-	w.addSubInterface(albumInterface11, common.Album, "Album 1.1", navigation.NavigationItemPositionTop, albumInterface1)
-	w.addSubInterface(albumInterface2, common.Album, "Album 2", navigation.NavigationItemPositionTop, albumInterface)
+	w.addSubInterface(albumInterface, common.MusicAlbum, "Albums", navigation.NavigationItemPositionScroll, nil)
+	w.addSubInterface(albumInterface1, common.MusicAlbum, "Album 1", navigation.NavigationItemPositionTop, albumInterface)
+	w.addSubInterface(albumInterface11, common.MusicAlbum, "Album 1.1", navigation.NavigationItemPositionTop, albumInterface1)
+	w.addSubInterface(albumInterface2, common.MusicAlbum, "Album 2", navigation.NavigationItemPositionTop, albumInterface)
 
 	// Enable expand-state memory for the tree nodes.
 	if tw, ok := w.navigationInterface.Widget("Album-Interface").(*navigation.NavigationTreeWidget); ok {
@@ -84,7 +84,7 @@ func newWindow() *Window {
 	avatar := navigation.NewNavigationAvatarWidget("zhiyiYo", asset.QImage(resFS, "resource/shoko.png"), w.QWidget)
 	w.navigationInterface.AddWidget("avatar", avatar, func(bool) { w.showMessageBox() }, navigation.NavigationItemPositionBottom, "", "")
 
-	w.addSubInterface(settingInterface, common.Setting, "Settings", navigation.NavigationItemPositionBottom, nil)
+	w.addSubInterface(settingInterface, common.Settings, "Settings", navigation.NavigationItemPositionBottom, nil)
 
 	w.stackWidget.OnCurrentChanged(w.onCurrentInterfaceChanged)
 	w.stackWidget.SetCurrentIndex(1)

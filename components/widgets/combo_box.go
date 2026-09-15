@@ -115,9 +115,9 @@ func (w *ComboBox) installEvents() {
 		rect := qt.NewQRectF4(float64(w.Width()-22), float64(w.Height())/2-5+w.arrowAni.y, 10, 10)
 		defer rect.Delete()
 		if common.IsDarkTheme() {
-			renderFluentIcon(common.ArrowDown, painter, rect, common.ThemeAuto)
+			renderFluentIcon(common.ChevronDown, painter, rect, common.ThemeAuto)
 		} else {
-			renderFluentIconWithFill(common.ArrowDown, painter, rect, "#646464")
+			renderFluentIconWithFill(common.ChevronDown, painter, rect, "#646464")
 		}
 		painter.End()
 	})
@@ -437,7 +437,7 @@ func NewEditableComboBox(parent *qt.QWidget) *EditableComboBox {
 		currentIndex:    -1,
 		maxVisibleItems: -1,
 	}
-	w.dropButton = NewLineEditButton(common.ArrowDown, w.QWidget)
+	w.dropButton = NewLineEditButton(common.ChevronDown, w.QWidget)
 	w.SetTextMargins(0, 0, 29, 0)
 	w.dropButton.SetFixedSize2(30, 25)
 	w.hBoxLayout.AddWidget3(w.dropButton.QWidget, 0, qt.AlignRight)

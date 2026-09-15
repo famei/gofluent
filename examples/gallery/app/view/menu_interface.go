@@ -26,7 +26,7 @@ type MenuInterface struct {
 // NewMenuInterface builds the menu interface.
 func NewMenuInterface(parent *qt.QWidget) *MenuInterface {
 	t := gallerycommon.NewTranslator()
-	i := &MenuInterface{GalleryInterface: NewGalleryInterface(t.Menus, "qfluentwidgets.components.widgets", parent)}
+	i := &MenuInterface{GalleryInterface: NewGalleryInterface(t.Menus, "github.com/famei/gofluent/components/widgets", parent)}
 	i.SetObjectName("menuInterface")
 
 	tr := func(s string) string { return gallerycommon.Tr("MenuInterface", s) }
@@ -38,6 +38,7 @@ func NewMenuInterface(parent *qt.QWidget) *MenuInterface {
 	for _, a := range []*gcommon.Action{i.createTimeAction, i.shootTimeAction, i.modifiedTimeAction, i.nameAction} {
 		a.SetCheckable(true)
 	}
+
 	actionGroup1 := qt.NewQActionGroup(i.QObject)
 	actionGroup1.AddAction(i.createTimeAction.QAction)
 	actionGroup1.AddAction(i.shootTimeAction.QAction)
@@ -112,7 +113,7 @@ func (i *MenuInterface) createMenu(pos *qt.QPoint) {
 	submenu.SetIcon(gcommon.Add)
 	submenu.AddActions([]*qt.QAction{
 		gcommon.NewActionFluentIcon(gcommon.Video, tr("Video"), nil).QAction,
-		gcommon.NewActionFluentIcon(gcommon.Music, tr("Music"), nil).QAction,
+		gcommon.NewActionFluentIcon(gcommon.Audio, tr("Music"), nil).QAction,
 	})
 	menu.AddMenu(submenu)
 
@@ -126,7 +127,7 @@ func (i *MenuInterface) createMenu(pos *qt.QPoint) {
 
 	acts := menu.MenuActions()
 	before := acts[len(acts)-1]
-	menu.InsertAction(before, gcommon.NewActionFluentIcon(gcommon.Setting, tr("Settings"), nil).QAction)
+	menu.InsertAction(before, gcommon.NewActionFluentIcon(gcommon.Settings, tr("Settings"), nil).QAction)
 	acts = menu.MenuActions()
 	before = acts[len(acts)-1]
 	menu.InsertAction(before, gcommon.NewActionFluentIcon(gcommon.Help, tr("Help"), nil).QAction)
@@ -149,7 +150,7 @@ func (i *MenuInterface) createCustomWidgetMenu(pos *qt.QPoint) {
 		gcommon.NewActionFluentIcon(gcommon.Code, tr("Redemption code and gift card"), nil).QAction,
 	})
 	menu.AddSeparator()
-	menu.AddAction(gcommon.NewActionFluentIcon(gcommon.Setting, tr("Settings"), nil).QAction)
+	menu.AddAction(gcommon.NewActionFluentIcon(gcommon.Settings, tr("Settings"), nil).QAction)
 	menu.Exec(pos, widgets.MenuAnimationDropDown)
 }
 
@@ -191,13 +192,13 @@ func (i *MenuInterface) createCommandBar() *qt.QWidget {
 		gcommon.NewActionFluentIcon(gcommon.Share, tr("Share"), nil).QAction,
 	})
 
-	button := widgets.NewTransparentDropDownPushButtonIcon(gcommon.Scroll, tr("Sort"), i.QWidget)
+	button := widgets.NewTransparentDropDownPushButtonIcon(gcommon.Sort, tr("Sort"), i.QWidget)
 	button.SetMenu(i.createCheckableMenu(nil).RoundMenu)
 	button.SetFixedHeight(34)
 	gcommon.SetFont(button.QWidget, 12, 400)
 	bar.AddWidget(button.QWidget)
 
-	settingsAction := gcommon.NewActionFluentIcon(gcommon.Setting, tr("Settings"), nil)
+	settingsAction := gcommon.NewActionFluentIcon(gcommon.Settings, tr("Settings"), nil)
 	settingsAction.SetShortcut(qt.NewQKeySequence2("Ctrl+I"))
 	bar.AddHiddenActions([]*qt.QAction{settingsAction.QAction})
 	return bar.QWidget
@@ -217,7 +218,7 @@ func (i *MenuInterface) createCommandBarFlyout() {
 	printAction := gcommon.NewActionFluentIcon(gcommon.Print, tr("Print"), nil)
 	printAction.SetShortcut(qt.NewQKeySequence2("Ctrl+P"))
 	view.AddHiddenAction(printAction.QAction)
-	settingsAction := gcommon.NewActionFluentIcon(gcommon.Setting, tr("Settings"), nil)
+	settingsAction := gcommon.NewActionFluentIcon(gcommon.Settings, tr("Settings"), nil)
 	settingsAction.SetShortcut(qt.NewQKeySequence2("Ctrl+S"))
 	view.AddHiddenAction(settingsAction.QAction)
 	view.ResizeToSuitableWidth()

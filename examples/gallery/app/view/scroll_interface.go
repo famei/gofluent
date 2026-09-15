@@ -16,7 +16,7 @@ type ScrollInterface struct {
 // NewScrollInterface builds the scroll interface.
 func NewScrollInterface(parent *qt.QWidget) *ScrollInterface {
 	t := gallerycommon.NewTranslator()
-	i := &ScrollInterface{GalleryInterface: NewGalleryInterface(t.Scroll, "qfluentwidgets.components.widgets", parent)}
+	i := &ScrollInterface{GalleryInterface: NewGalleryInterface(t.Scroll, "github.com/famei/gofluent/components/widgets", parent)}
 	i.SetObjectName("scrollInterface")
 
 	tr := func(s string) string { return gallerycommon.Tr("ScrollInterface", s) }

@@ -135,7 +135,7 @@ func NewLineEdit(parent *qt.QWidget) *LineEdit {
 	common.SetFont(w.QWidget, 14, 400)
 
 	w.hBoxLayout = qt.NewQHBoxLayout(w.QWidget)
-	w.clearButton = NewLineEditButton(common.Close, w.QWidget)
+	w.clearButton = NewLineEditButton(common.Cancel, w.QWidget)
 	w.clearButton.SetFixedSize2(29, 25)
 	w.clearButton.Hide()
 

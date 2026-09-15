@@ -153,7 +153,7 @@ func NewFlyoutView(title, content string, icon, image interface{}, isClosable bo
 	w.contentLabel = qt.NewQLabel5(content, w.QWidget)
 	w.iconWidget = NewFlyoutIconWidget(icon, w.QWidget)
 	w.imageLabel = NewImageLabel(w.QWidget)
-	w.closeButton = NewTransparentToolButtonIcon(common.Close, w.QWidget).QToolButton
+	w.closeButton = NewTransparentToolButtonIcon(common.Cancel, w.QWidget).QToolButton
 	w.initWidgets()
 	return w
 }

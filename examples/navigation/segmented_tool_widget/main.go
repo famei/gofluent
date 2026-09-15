@@ -57,8 +57,8 @@ func newDemo() *Demo {
 	w.artistInterface = qt.NewQLabel5("Artist Interface", w.QWidget)
 
 	// add items to pivot.
-	w.addSubInterface(w.songInterface, "songInterface", common.Music)
-	w.addSubInterface(w.albumInterface, "albumInterface", common.Album)
+	w.addSubInterface(w.songInterface, "songInterface", common.Audio)
+	w.addSubInterface(w.albumInterface, "albumInterface", common.MusicAlbum)
 	w.addSubInterface(w.artistInterface, "artistInterface", common.People)
 
 	w.hBoxLayout.AddWidget3(w.pivot.QWidget, 0, qt.AlignCenter)

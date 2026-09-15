@@ -11,14 +11,14 @@ import (
 // scroll bar groove.
 type ArrowButton struct {
 	*qt.QToolButton
-	icon       common.FluentIcon
+	icon       common.FluentIconBase
 	lightColor *qt.QColor
 	darkColor  *qt.QColor
 	opacity    float64
 }
 
 // NewArrowButton builds an arrow button from a FluentIcon.
-func NewArrowButton(icon common.FluentIcon, parent *qt.QWidget) *ArrowButton {
+func NewArrowButton(icon common.FluentIconBase, parent *qt.QWidget) *ArrowButton {
 	w := &ArrowButton{
 		QToolButton: qt.NewQToolButton(parent),
 		icon:        icon,
@@ -104,8 +104,8 @@ func NewScrollBarGroove(orient qt.Orientation, parent *qt.QWidget) *ScrollBarGro
 	}
 	if orient == qt.Vertical {
 		w.SetFixedWidth(12)
-		w.upButton = NewArrowButton(common.CareUpSolid, w.QWidget)
-		w.downButton = NewArrowButton(common.CareDownSolid, w.QWidget)
+		w.upButton = NewArrowButton(common.CaretSolidUp, w.QWidget)
+		w.downButton = NewArrowButton(common.CaretSolidDown, w.QWidget)
 		layout := qt.NewQVBoxLayout(w.QWidget)
 		layout.AddWidget3(w.upButton.QWidget, 0, qt.AlignHCenter)
 		layout.AddStretchWithStretch(1)
@@ -113,8 +113,8 @@ func NewScrollBarGroove(orient qt.Orientation, parent *qt.QWidget) *ScrollBarGro
 		layout.SetContentsMargins(0, 3, 0, 3)
 	} else {
 		w.SetFixedHeight(12)
-		w.upButton = NewArrowButton(common.CareLeftSolid, w.QWidget)
-		w.downButton = NewArrowButton(common.CareRightSolid, w.QWidget)
+		w.upButton = NewArrowButton(common.CaretSolidLeft, w.QWidget)
+		w.downButton = NewArrowButton(common.CaretSolidRight, w.QWidget)
 		layout := qt.NewQHBoxLayout(w.QWidget)
 		layout.AddWidget3(w.upButton.QWidget, 0, qt.AlignVCenter)
 		layout.AddStretchWithStretch(1)

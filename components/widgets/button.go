@@ -960,13 +960,13 @@ func drawDropDownArrow(btn *qt.QWidget, isEnabled, isHover, isPressed, primary b
 		if !(isEnabled && common.IsDarkTheme()) {
 			theme = common.ThemeDark
 		}
-		common.ArrowDown.Render(painter, rect, theme)
+		common.ChevronDown.Render(painter, rect, theme)
 		return
 	}
 	if common.IsDarkTheme() {
-		common.ArrowDown.Render(painter, rect, common.ThemeDark)
+		common.ChevronDown.Render(painter, rect, common.ThemeDark)
 	} else {
-		renderFluentIconWithFill(common.ArrowDown, painter, rect, "#646464")
+		renderFluentIconWithFill(common.ChevronDown, painter, rect, "#646464")
 	}
 }
 
@@ -1218,7 +1218,7 @@ func (w *PrimaryDropDownToolButton) paintArrow(painter *qt.QPainter) {
 // split button.
 func newSplitDropButton(parent *qt.QWidget, primary bool) *ToolButton {
 	b := NewToolButton(parent)
-	b.SetIcon(common.ArrowDown)
+	b.SetIcon(common.ChevronDown)
 	b.SetIconSize(qt.NewQSize2(10, 10))
 	// Mirror Python SplitDropButton._postInit: horizontal Minimum keeps the drop
 	// button at its sizeHint width (8 left padding + 10 icon + 9 right padding +

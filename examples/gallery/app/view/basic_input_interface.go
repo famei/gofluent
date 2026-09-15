@@ -18,7 +18,7 @@ type BasicInputInterface struct {
 // NewBasicInputInterface builds the basic input interface.
 func NewBasicInputInterface(parent *qt.QWidget) *BasicInputInterface {
 	translator := gallerycommon.NewTranslator()
-	i := &BasicInputInterface{GalleryInterface: NewGalleryInterface(translator.BasicInput, "qfluentwidgets.components.widgets", parent)}
+	i := &BasicInputInterface{GalleryInterface: NewGalleryInterface(translator.BasicInput, "github.com/famei/gofluent/components/widgets", parent)}
 	i.SetObjectName("basicInputInterface")
 
 	tr := func(s string) string { return gallerycommon.Tr("BasicInputInterface", s) }
@@ -33,11 +33,11 @@ func NewBasicInputInterface(parent *qt.QWidget) *BasicInputInterface {
 	i.AddExampleCard(tr("A button with graphical content"), button.QWidget, buttonSrc, 0)
 
 	i.AddExampleCard(tr("Accent style applied to push button"), widgets.NewPrimaryPushButtonText(tr("Accent style button"), nil).QWidget, buttonSrc, 0)
-	i.AddExampleCard(tr("Accent style applied to tool button"), widgets.NewPrimaryToolButtonIcon(gcommon.Basketball, nil).QWidget, buttonSrc, 0)
+	i.AddExampleCard(tr("Accent style applied to tool button"), widgets.NewPrimaryToolButtonIcon(gcommon.LeafTwo, nil).QWidget, buttonSrc, 0)
 	i.AddExampleCard(tr("Pill push button"), widgets.NewPillPushButtonIcon(gcommon.Tag, tr("Tag"), i.QWidget).QWidget, buttonSrc, 0)
-	i.AddExampleCard(tr("Pill tool button"), widgets.NewPillToolButtonIcon(gcommon.Basketball, nil).QWidget, buttonSrc, 0)
-	i.AddExampleCard(tr("A transparent push button"), widgets.NewTransparentPushButtonIcon(gcommon.BookShelf, tr("Transparent push button"), i.QWidget).QWidget, buttonSrc, 0)
-	i.AddExampleCard(tr("A transparent tool button"), widgets.NewTransparentToolButtonIcon(gcommon.BookShelf, i.QWidget).QWidget, buttonSrc, 0)
+	i.AddExampleCard(tr("Pill tool button"), widgets.NewPillToolButtonIcon(gcommon.LeafTwo, nil).QWidget, buttonSrc, 0)
+	i.AddExampleCard(tr("A transparent push button"), widgets.NewTransparentPushButtonIcon(gcommon.Library, tr("Transparent push button"), i.QWidget).QWidget, buttonSrc, 0)
+	i.AddExampleCard(tr("A transparent tool button"), widgets.NewTransparentToolButtonIcon(gcommon.Library, i.QWidget).QWidget, buttonSrc, 0)
 
 	i.AddExampleCard(tr("A 2-state CheckBox"), widgets.NewCheckBoxText(tr("Two-state CheckBox"), nil).QWidget,
 		"basic_input/check_box/main.go", 0)
@@ -118,7 +118,7 @@ func NewBasicInputInterface(parent *qt.QWidget) *BasicInputInterface {
 	i.AddExampleCard(tr("A simple horizontal slider"), slider.QWidget,
 		"basic_input/slider/main.go", 0)
 
-	splitPush := widgets.NewSplitPushButtonIcon(gcommon.Basketball, tr("Choose your stand"), i.QWidget)
+	splitPush := widgets.NewSplitPushButtonIcon(gcommon.LeafTwo, tr("Choose your stand"), i.QWidget)
 	splitPush.SetFlyout(i.createStandMenu(splitPush))
 	i.AddExampleCard(tr("A split push button with drop down menu"), splitPush.QWidget, buttonSrc, 0)
 
@@ -134,11 +134,11 @@ func NewBasicInputInterface(parent *qt.QWidget) *BasicInputInterface {
 	splitTool.SetFlyout(ikunMenu)
 	i.AddExampleCard(tr("A split tool button with drop down menu"), splitTool.QWidget, buttonSrc, 0)
 
-	pspPush := widgets.NewPrimarySplitPushButtonIcon(gcommon.Basketball, tr("Choose your stand"), i.QWidget)
+	pspPush := widgets.NewPrimarySplitPushButtonIcon(gcommon.LeafTwo, tr("Choose your stand"), i.QWidget)
 	pspPush.SetFlyout(i.createStandMenu(pspPush.SplitPushButton))
 	i.AddExampleCard(tr("A primary color split push button with drop down menu"), pspPush.QWidget, buttonSrc, 0)
 
-	pspTool := widgets.NewPrimarySplitToolButtonIcon(gcommon.Basketball, i.QWidget)
+	pspTool := widgets.NewPrimarySplitToolButtonIcon(gcommon.LeafTwo, i.QWidget)
 	pspTool.SetFlyout(ikunMenu)
 	i.AddExampleCard(tr("A primary color split tool button with drop down menu"), pspTool.QWidget, buttonSrc, 0)
 
@@ -147,10 +147,10 @@ func NewBasicInputInterface(parent *qt.QWidget) *BasicInputInterface {
 	i.AddExampleCard(tr("A simple switch button"), i.switchButton.QWidget,
 		"basic_input/switch_button/main.go", 0)
 
-	i.AddExampleCard(tr("A simple toggle push button"), widgets.NewToggleButtonIcon(gcommon.Basketball, tr("Start practicing"), i.QWidget).QWidget, buttonSrc, 0)
-	i.AddExampleCard(tr("A simple toggle tool button"), widgets.NewToggleToolButtonIcon(gcommon.Basketball, i.QWidget).QWidget, buttonSrc, 0)
-	i.AddExampleCard(tr("A transparent toggle push button"), widgets.NewTransparentTogglePushButtonIcon(gcommon.Basketball, tr("Start practicing"), i.QWidget).QWidget, buttonSrc, 0)
-	i.AddExampleCard(tr("A transparent toggle tool button"), widgets.NewTransparentToggleToolButtonIcon(gcommon.Basketball, i.QWidget).QWidget, buttonSrc, 0)
+	i.AddExampleCard(tr("A simple toggle push button"), widgets.NewToggleButtonIcon(gcommon.LeafTwo, tr("Start practicing"), i.QWidget).QWidget, buttonSrc, 0)
+	i.AddExampleCard(tr("A simple toggle tool button"), widgets.NewToggleToolButtonIcon(gcommon.LeafTwo, i.QWidget).QWidget, buttonSrc, 0)
+	i.AddExampleCard(tr("A transparent toggle push button"), widgets.NewTransparentTogglePushButtonIcon(gcommon.LeafTwo, tr("Start practicing"), i.QWidget).QWidget, buttonSrc, 0)
+	i.AddExampleCard(tr("A transparent toggle tool button"), widgets.NewTransparentToggleToolButtonIcon(gcommon.LeafTwo, i.QWidget).QWidget, buttonSrc, 0)
 	return i
 }
 

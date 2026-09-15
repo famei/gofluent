@@ -50,7 +50,7 @@ func (w *Demo) showContextMenu(e *qt.QContextMenuEvent) {
 	submenu := widgets.NewRoundMenu("Add to", w.QWidget)
 	submenu.SetIcon(common.Add)
 	submenu.AddAction(common.NewActionFluentIcon(common.Video, "Video", nil).QAction)
-	submenu.AddAction(common.NewActionFluentIcon(common.Music, "Music", nil).QAction)
+	submenu.AddAction(common.NewActionFluentIcon(common.Audio, "Music", nil).QAction)
 	menu.AddMenu(submenu)
 
 	// add actions
@@ -66,7 +66,7 @@ func (w *Demo) showContextMenu(e *qt.QContextMenuEvent) {
 
 	// insert actions before the last action ("Select all")
 	before := menu.MenuActions()[len(menu.MenuActions())-1]
-	settingsAct := common.NewActionFluentIcon(common.Setting, "Settings", nil)
+	settingsAct := common.NewActionFluentIcon(common.Settings, "Settings", nil)
 	settingsAct.SetShortcut(qt.NewQKeySequence2("Ctrl+S"))
 	menu.InsertAction(before, settingsAct.QAction)
 

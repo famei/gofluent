@@ -70,7 +70,7 @@ func NewToolBar(title, subtitle string, parent *qt.QWidget) *ToolBar {
 
 	t.documentButton = widgets.NewPushButtonIcon(gcommon.Document, gallerycommon.Tr("ToolBar", "Documentation"), t.QWidget)
 	t.sourceButton = widgets.NewPushButtonIcon(gcommon.GitHub, gallerycommon.Tr("ToolBar", "Source"), t.QWidget)
-	t.themeButton = widgets.NewToolButtonIcon(gcommon.Constract, t.QWidget)
+	t.themeButton = widgets.NewToolButtonIcon(gcommon.Light, t.QWidget)
 	t.separator = NewSeparatorWidget(t.QWidget)
 	t.supportButton = widgets.NewToolButtonIcon(gcommon.Heart, t.QWidget)
 	t.feedbackButton = widgets.NewToolButtonIcon(gcommon.Feedback, t.QWidget)
