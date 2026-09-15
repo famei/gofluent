@@ -1036,7 +1036,7 @@ func (m *RoundMenu) createItemIconForAction(icon *qt.QIcon) *qt.QIcon {
 		return qt.NewQIcon()
 	}
 	if icon != nil && !icon.IsNull() {
-		return icon
+		return menuRowIcon(icon)
 	}
 	// Transparent placeholder keeps the text aligned with icon-bearing items.
 	pix := qt.NewQPixmap2(m.view.IconSize().Width(), m.view.IconSize().Height())
@@ -1045,6 +1045,32 @@ func (m *RoundMenu) createItemIconForAction(icon *qt.QIcon) *qt.QIcon {
 	defer transparent.Delete()
 	pix.FillWithFillColor(transparent)
 	return qt.NewQIcon2(pix)
+}
+
+// menuRowIcon returns an icon that draws the same pixmap in every icon mode.
+//
+// A selected menu row — the parent row of an open sub-menu — is painted by the
+// style with QIcon::Selected, and an icon that only carries its normal pixmap is
+// then recoloured with the palette highlight; that turned the sub-menu row's icon
+// blue while the sub-menu was open. Registering the normal pixmap for the active
+// and selected modes as well keeps the row icon in the menu's own colour. The
+// given icon is left untouched: it is usually shared with the action (and with
+// the command bar that renders the same action).
+func menuRowIcon(icon *qt.QIcon) *qt.QIcon {
+	sizes := icon.AvailableSizes()
+	if len(sizes) == 0 {
+		return icon
+	}
+	modes := [...]qt.QIcon__Mode{qt.QIcon__Normal, qt.QIcon__Active, qt.QIcon__Selected}
+	out := qt.NewQIcon()
+	for _, size := range sizes {
+		s := size
+		pm := icon.Pixmap5(&s, qt.QIcon__Normal, qt.QIcon__Off) // GoGC-armed copy — do NOT Delete
+		for _, mode := range modes {
+			out.AddPixmap3(pm, mode, qt.QIcon__Off)
+		}
+	}
+	return out
 }
 
 func (m *RoundMenu) rowOfAction(action *qt.QAction) int {
@@ -1201,7 +1227,7 @@ type LabelContextMenu struct {
 // NewLabelContextMenu builds a label context menu.
 func NewLabelContextMenu(label *qt.QLabel) *LabelContextMenu {
 	m := &LabelContextMenu{RoundMenu: NewRoundMenu("", label.QWidget), label: label}
-	copyAct := m.AddActionIcon(common.FluentIcon(common.Copy), "Copy")
+	copyAct := m.AddActionIcon(common.Copy, "Copy")
 	copyAct.SetShortcut(qt.NewQKeySequence2("Ctrl+C"))
 	copyAct.OnTriggered(func() {
 		qt.QGuiApplication_Clipboard().SetText(label.SelectedText())

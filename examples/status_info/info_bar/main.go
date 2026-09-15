@@ -65,7 +65,7 @@ func (d *infoBarDemo) createErrorInfoBar() {
 }
 
 func (d *infoBarDemo) createCustomInfoBar() {
-	bar := widgets.NewInfoBar(common.GitHub, "Zeppeli", "人間讃歌は「勇気」の讃歌ッ！！ 人間のすばらしさは勇気のすばらしさ！！", qt.Horizontal, true, 2000, widgets.InfoBarPositionBottom, d.QWidget)
+	bar := widgets.NewInfoBar(common.Code, "Zeppeli", "人間讃歌は「勇気」の讃歌ッ！！ 人間のすばらしさは勇気のすばらしさ！！", qt.Horizontal, true, 2000, widgets.InfoBarPositionBottom, d.QWidget)
 	bar.SetCustomBackgroundColor(qt.NewQColor6("white"), qt.NewQColor6("#202020"))
 	bar.Show()
 }

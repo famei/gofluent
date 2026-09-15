@@ -5,7 +5,6 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/famei/gofluent/resources"
 	qt "github.com/mappu/miqt/qt"
 	"github.com/mappu/miqt/qt/svg"
 )
@@ -80,232 +79,6 @@ type FluentIconBase interface {
 	QIcon(reverse bool) *qt.QIcon
 }
 
-// FluentIcon is the Fluent 2 icon set. The Go constant value is the icon name
-// (the same string used by the SVG filenames).
-type FluentIcon string
-
-/*
-const (
-
-	Up                   FluentIcon = "Up"
-	Add                  FluentIcon = "Add"
-	Bus                  FluentIcon = "Bus"
-	Car                  FluentIcon = "Car"
-	Cut                  FluentIcon = "Cut"
-	Iot                  FluentIcon = "IOT"
-	Pin                  FluentIcon = "Pin"
-	Tag                  FluentIcon = "Tag"
-	Vpn                  FluentIcon = "VPN"
-	Cafe                 FluentIcon = "Cafe"
-	Chat                 FluentIcon = "Chat"
-	Copy                 FluentIcon = "Copy"
-	Code                 FluentIcon = "Code"
-	Down                 FluentIcon = "Down"
-	Edit                 FluentIcon = "Edit"
-	Flag                 FluentIcon = "Flag"
-	Font                 FluentIcon = "Font"
-	Game                 FluentIcon = "Game"
-	Help                 FluentIcon = "Help"
-	Hide                 FluentIcon = "Hide"
-	Home                 FluentIcon = "Home"
-	Info                 FluentIcon = "Info"
-	Leaf                 FluentIcon = "Leaf"
-	Link                 FluentIcon = "Link"
-	Mail                 FluentIcon = "Mail"
-	Menu                 FluentIcon = "Menu"
-	Mute                 FluentIcon = "Mute"
-	More                 FluentIcon = "More"
-	Move                 FluentIcon = "Move"
-	Play                 FluentIcon = "Play"
-	Save                 FluentIcon = "Save"
-	Send                 FluentIcon = "Send"
-	Sync                 FluentIcon = "Sync"
-	Unit                 FluentIcon = "Unit"
-	View                 FluentIcon = "View"
-	Wifi                 FluentIcon = "Wifi"
-	Zoom                 FluentIcon = "Zoom"
-	Album                FluentIcon = "Album"
-	Brush                FluentIcon = "Brush"
-	Broom                FluentIcon = "Broom"
-	Close                FluentIcon = "Close"
-	Cloud                FluentIcon = "Cloud"
-	Embed                FluentIcon = "Embed"
-	Globe                FluentIcon = "Globe"
-	Heart                FluentIcon = "Heart"
-	Label                FluentIcon = "Label"
-	Media                FluentIcon = "Media"
-	Movie                FluentIcon = "Movie"
-	Music                FluentIcon = "Music"
-	Robot                FluentIcon = "Robot"
-	Pause                FluentIcon = "Pause"
-	Paste                FluentIcon = "Paste"
-	Photo                FluentIcon = "Photo"
-	Phone                FluentIcon = "Phone"
-	Print                FluentIcon = "Print"
-	Share                FluentIcon = "Share"
-	Tiles                FluentIcon = "Tiles"
-	Unpin                FluentIcon = "Unpin"
-	Video                FluentIcon = "Video"
-	Train                FluentIcon = "Train"
-	AddTo                FluentIcon = "AddTo"
-	Accept               FluentIcon = "Accept"
-	Camera               FluentIcon = "Camera"
-	Cancel               FluentIcon = "Cancel"
-	Delete               FluentIcon = "Delete"
-	Folder               FluentIcon = "Folder"
-	Filter               FluentIcon = "Filter"
-	Market               FluentIcon = "Market"
-	Scroll               FluentIcon = "Scroll"
-	Layout               FluentIcon = "Layout"
-	GitHub               FluentIcon = "GitHub"
-	Update               FluentIcon = "Update"
-	Remove               FluentIcon = "Remove"
-	Return               FluentIcon = "Return"
-	People               FluentIcon = "People"
-	QRCode               FluentIcon = "QRCode"
-	Ringer               FluentIcon = "Ringer"
-	Rotate               FluentIcon = "Rotate"
-	Search               FluentIcon = "Search"
-	Volume               FluentIcon = "Volume"
-	Frigid               FluentIcon = "Frigid"
-	SaveAs               FluentIcon = "SaveAs"
-	ZoomIn               FluentIcon = "ZoomIn"
-	Connect              FluentIcon = "Connect"
-	History              FluentIcon = "History"
-	Setting              FluentIcon = "Setting"
-	Palette              FluentIcon = "Palette"
-	Message              FluentIcon = "Message"
-	FitPage              FluentIcon = "FitPage"
-	ZoomOut              FluentIcon = "ZoomOut"
-	Airplane             FluentIcon = "Airplane"
-	Asterisk             FluentIcon = "Asterisk"
-	Calories             FluentIcon = "Calories"
-	Calendar             FluentIcon = "Calendar"
-	Feedback             FluentIcon = "Feedback"
-	Library              FluentIcon = "BookShelf"
-	Minimize             FluentIcon = "Minimize"
-	Checkbox             FluentIcon = "CheckBox"
-	Document             FluentIcon = "Document"
-	Language             FluentIcon = "Language"
-	Download             FluentIcon = "Download"
-	Question             FluentIcon = "Question"
-	Speakers             FluentIcon = "Speakers"
-	DateTime             FluentIcon = "DateTime"
-	FontSize             FluentIcon = "FontSize"
-	HomeFill             FluentIcon = "HomeFill"
-	PageLeft             FluentIcon = "PageLeft"
-	SaveCopy             FluentIcon = "SaveCopy"
-	SendFill             FluentIcon = "SendFill"
-	SkipBack             FluentIcon = "SkipBack"
-	SpeedOff             FluentIcon = "SpeedOff"
-	Alignment            FluentIcon = "Alignment"
-	Bluetooth            FluentIcon = "Bluetooth"
-	Completed            FluentIcon = "Completed"
-	Constract            FluentIcon = "Constract"
-	Headphone            FluentIcon = "Headphone"
-	Megaphone            FluentIcon = "Megaphone"
-	Projector            FluentIcon = "Projector"
-	Education            FluentIcon = "Education"
-	LeftArrow            FluentIcon = "LeftArrow"
-	EraseTool            FluentIcon = "EraseTool"
-	PageRight            FluentIcon = "PageRight"
-	PlaySolid            FluentIcon = "PlaySolid"
-	BookShelf            FluentIcon = "BookShelf"
-	Highlight            FluentIcon = "Highlight"
-	FolderAdd            FluentIcon = "FolderAdd"
-	PauseBold            FluentIcon = "PauseBold"
-	PencilInk            FluentIcon = "PencilInk"
-	PieSingle            FluentIcon = "PieSingle"
-	QuickNote            FluentIcon = "QuickNote"
-	SpeedHigh            FluentIcon = "SpeedHigh"
-	StopWatch            FluentIcon = "StopWatch"
-	ZipFolder            FluentIcon = "ZipFolder"
-	Basketball           FluentIcon = "Basketball"
-	Brightness           FluentIcon = "Brightness"
-	Dictionary           FluentIcon = "Dictionary"
-	Microphone           FluentIcon = "Microphone"
-	ArrowDown            FluentIcon = "ChevronDown"
-	FullScreen           FluentIcon = "FullScreen"
-	MixVolumes           FluentIcon = "MixVolumes"
-	RemoveFrom           FluentIcon = "RemoveFrom"
-	RightArrow           FluentIcon = "RightArrow"
-	QuietHours           FluentIcon = "QuietHours"
-	Fingerprint          FluentIcon = "Fingerprint"
-	Application          FluentIcon = "Application"
-	Certificate          FluentIcon = "Certificate"
-	Transparent          FluentIcon = "Transparent"
-	ImageExport          FluentIcon = "ImageExport"
-	SpeedMedium          FluentIcon = "SpeedMedium"
-	LibraryFill          FluentIcon = "LibraryFill"
-	MusicFolder          FluentIcon = "MusicFolder"
-	PowerButton          FluentIcon = "PowerButton"
-	SkipForward          FluentIcon = "SkipForward"
-	CareUpSolid          FluentIcon = "CareUpSolid"
-	AcceptMedium         FluentIcon = "AcceptMedium"
-	CancelMedium         FluentIcon = "CancelMedium"
-	ChevronRight         FluentIcon = "ChevronRight"
-	ClippingTool         FluentIcon = "ClippingTool"
-	SearchMirror         FluentIcon = "SearchMirror"
-	ShoppingCart         FluentIcon = "ShoppingCart"
-	FontIncrease         FluentIcon = "FontIncrease"
-	BackToWindow         FluentIcon = "BackToWindow"
-	CommandPrompt        FluentIcon = "CommandPrompt"
-	CloudDownload        FluentIcon = "CloudDownload"
-	DictionaryAdd        FluentIcon = "DictionaryAdd"
-	CareDownSolid        FluentIcon = "CareDownSolid"
-	CareLeftSolid        FluentIcon = "CareLeftSolid"
-	ClearSelection       FluentIcon = "ClearSelection"
-	DeveloperTools       FluentIcon = "DeveloperTools"
-	BackgroundFill       FluentIcon = "BackgroundColor"
-	CareRightSolid       FluentIcon = "CareRightSolid"
-	ChevronDownMed       FluentIcon = "ChevronDownMed"
-	ChevronRightMed      FluentIcon = "ChevronRightMed"
-	EmojiTabSymbols      FluentIcon = "EmojiTabSymbols"
-	ExpressiveInputEntry FluentIcon = "ExpressiveInputEntry"
-
-)
-*/
-
-const (
-	GitHub FluentIcon = "GitHub"
-)
-
-// Path returns the logical Qt resource path for the icon.
-func (f FluentIcon) Path(theme Theme) string {
-	return ":/qfluentwidgets/images/icons/" + string(f) + "_" + GetIconColor(theme, false) + ".svg"
-}
-
-// svgBytes returns the embedded SVG content for the icon and theme.
-func (f FluentIcon) svgBytes(theme Theme) []byte {
-	return resources.IconSVG(string(f), GetIconColor(theme, false))
-}
-
-// Icon returns a QIcon rendered from the embedded SVG.
-func (f FluentIcon) Icon(theme Theme) *qt.QIcon {
-	return svgBytesToIcon(f.svgBytes(theme))
-}
-
-// IconWithColor returns a QIcon whose SVG fill attribute is set to color.
-func (f FluentIcon) IconWithColor(theme Theme, color *qt.QColor) *qt.QIcon {
-	recolorSvg := RecolorSvg(string(f.svgBytes(theme)), color.Name())
-	return svgBytesToIcon([]byte(recolorSvg))
-}
-
-// Colored returns an icon recolored for light/dark mode.
-func (f FluentIcon) Colored(light, dark *qt.QColor) *ColoredFluentIcon {
-	return &ColoredFluentIcon{fluentIcon: f, lightColor: light, darkColor: dark}
-}
-
-// Render draws the icon into a painter.
-func (f FluentIcon) Render(painter *qt.QPainter, rect *qt.QRectF, theme Theme) {
-	DrawSvgIcon(f.svgBytes(theme), painter, rect)
-}
-
-// QIcon returns a QIcon for the current theme (reverse swaps black/white).
-func (f FluentIcon) QIcon(reverse bool) *qt.QIcon {
-	return svgBytesToIcon(resources.IconSVG(string(f), GetIconColor(ThemeAuto, reverse)))
-}
-
 // ColoredFluentIcon wraps a FluentIconBase and applies light/dark colors.
 type ColoredFluentIcon struct {
 	fluentIcon FluentIconBase
@@ -318,8 +91,6 @@ func (c *ColoredFluentIcon) Path(theme Theme) string { return c.fluentIcon.Path(
 
 // Icon returns a recolored QIcon.
 func (c *ColoredFluentIcon) Icon(theme Theme) *qt.QIcon {
-	//svgBytes := c.svgBytes(theme)
-	//return svgBytesToIcon(svgBytes)
 	if f, ok := c.fluentIcon.(SegoeFluentIcon); ok {
 		return f.renderIcon(theme, c.color(theme))
 	}
@@ -333,14 +104,6 @@ func (c *ColoredFluentIcon) color(theme Theme) *qt.QColor {
 	return c.lightColor
 }
 
-func (c *ColoredFluentIcon) svgBytes(theme Theme) []byte {
-	if fi, ok := c.fluentIcon.(FluentIcon); ok {
-		raw := fi.svgBytes(theme)
-		return []byte(RecolorSvg(string(raw), c.color(theme).Name()))
-	}
-	return nil
-}
-
 // Colored returns the receiver (already colored).
 func (c *ColoredFluentIcon) Colored(light, dark *qt.QColor) *ColoredFluentIcon {
 	c.lightColor, c.darkColor = light, dark
@@ -349,9 +112,6 @@ func (c *ColoredFluentIcon) Colored(light, dark *qt.QColor) *ColoredFluentIcon {
 
 // Render draws the recolored icon into a painter.
 func (c *ColoredFluentIcon) Render(painter *qt.QPainter, rect *qt.QRectF, theme Theme) {
-	//if b := c.svgBytes(theme); len(b) > 0 {
-	//	DrawSvgIcon(b, painter, rect)
-	//}
 	if f, ok := c.fluentIcon.(SegoeFluentIcon); ok {
 		f.RenderGlyph(painter, rect, theme, c.color(theme))
 		return
@@ -456,14 +216,14 @@ func (f *FluentFontIconBase) Render(painter *qt.QPainter, rect *qt.QRectF, theme
 // QIcon returns a theme-following glyph QIcon.
 func (f *FluentFontIconBase) QIcon(reverse bool) *qt.QIcon { return f.Icon(ThemeAuto) }
 
-// Icon wraps a FluentIcon together with its current QIcon.
+// Icon wraps an icon source together with its current QIcon.
 type Icon struct {
-	FluentIcon FluentIcon
+	FluentIcon FluentIconBase
 	QIcon      *qt.QIcon
 }
 
-// NewIcon builds an Icon from a FluentIcon.
-func NewIcon(fluentIcon FluentIcon) *Icon {
+// NewIcon builds an Icon from a FluentIconBase.
+func NewIcon(fluentIcon FluentIconBase) *Icon {
 	return &Icon{FluentIcon: fluentIcon, QIcon: fluentIcon.Icon(ThemeAuto)}
 }
 
@@ -496,7 +256,7 @@ func DrawIcon(icon interface{}, painter *qt.QPainter, rect *qt.QRectF) {
 	}
 }
 
-// Action is a QAction that remembers the FluentIcon it was created with.
+// Action is a QAction that remembers the fluent icon it was created with.
 type Action struct {
 	*qt.QAction
 	fluentIcon FluentIconBase

@@ -39,7 +39,7 @@ func newToolButtonDemo() *toolButtonDemo {
 	dropDownToolButton := widgets.NewDropDownToolButtonIcon(common.Mail, w.QWidget)
 	dropDownToolButton.SetMenu(menu)
 
-	splitToolButton := widgets.NewSplitToolButtonIcon(common.GitHub, w.QWidget)
+	splitToolButton := widgets.NewSplitToolButtonIcon(common.Code, w.QWidget)
 	splitToolButton.SetFlyout(menu)
 
 	primaryToolButton := widgets.NewPrimaryToolButtonIcon(common.Settings, w.QWidget)
@@ -47,14 +47,14 @@ func newToolButtonDemo() *toolButtonDemo {
 	primaryDropDownToolButton := widgets.NewPrimaryDropDownToolButtonIcon(common.Mail, w.QWidget)
 	primaryDropDownToolButton.SetMenu(menu)
 
-	primarySplitToolButton := widgets.NewPrimarySplitToolButtonIcon(common.GitHub, w.QWidget)
+	primarySplitToolButton := widgets.NewPrimarySplitToolButtonIcon(common.Code, w.QWidget)
 	primarySplitToolButton.SetFlyout(menu)
 
 	toggleToolButton := widgets.NewToggleToolButtonIcon(common.Settings, w.QWidget)
 	toggleToolButton.OnToggled(func(bool) { fmt.Println("Toggled") })
 	toggleToolButton.Toggle()
 
-	transparentToggleToolButton := widgets.NewTransparentToggleToolButtonIcon(common.GitHub, w.QWidget)
+	transparentToggleToolButton := widgets.NewTransparentToggleToolButtonIcon(common.Code, w.QWidget)
 
 	transparentToolButton := widgets.NewTransparentToolButtonIcon(common.Mail, w.QWidget)
 
@@ -132,12 +132,12 @@ func newPushButtonDemo() *pushButtonDemo {
 	transparentDropDownPushButton2.SetMenu(menu)
 
 	splitPushButton1 := widgets.NewSplitPushButtonText("Split push button", w.QWidget)
-	splitPushButton2 := widgets.NewSplitPushButtonIcon(common.GitHub, "Split push button", w.QWidget)
+	splitPushButton2 := widgets.NewSplitPushButtonIcon(common.Code, "Split push button", w.QWidget)
 	splitPushButton1.SetFlyout(menu)
 	splitPushButton2.SetFlyout(menu)
 
 	primarySplitPushButton1 := widgets.NewPrimarySplitPushButtonText("Split push button", w.QWidget)
-	primarySplitPushButton2 := widgets.NewPrimarySplitPushButtonIcon(common.GitHub, "Split push button", w.QWidget)
+	primarySplitPushButton2 := widgets.NewPrimarySplitPushButtonIcon(common.Code, "Split push button", w.QWidget)
 	primarySplitPushButton1.SetFlyout(menu)
 	primarySplitPushButton2.SetFlyout(menu)
 

@@ -38,7 +38,7 @@ func (i InfoBarIcon) render(painter *qt.QPainter, rect *qt.QRectF) {
 
 // drawInfoBarIconOrGeneric renders an icon source that may be an InfoBarIcon
 // (the information glyph is recolored with the theme color, matching the
-// InfoIconWidget) or any other FluentIcon / QIcon / string source. It is shared
+// InfoIconWidget) or any other fluent icon / QIcon / string source. It is shared
 // by the flyout / teaching-tip icon widget and InfoIconWidget so that
 // InfoBarIcon values render correctly when used as a Flyout/TeachingTip icon.
 func drawInfoBarIconOrGeneric(icon interface{}, painter *qt.QPainter, rect *qt.QRectF) {

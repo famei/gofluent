@@ -71,7 +71,7 @@ func newDemo1() *Demo1 {
 
 // addButton mirrors the Python Demo1.addButton helper: create an action, print
 // its text on trigger, and append it to the command bar.
-func (w *Demo1) addButton(icon common.FluentIcon, text string) {
+func (w *Demo1) addButton(icon common.FluentIconBase, text string) {
 	action := common.NewActionFluentIcon(icon, text, nil)
 	action.OnTriggered(func() { fmt.Println(text) })
 	w.commandBar.AddAction(action.QAction)

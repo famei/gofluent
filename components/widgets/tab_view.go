@@ -35,14 +35,6 @@ func newTabToolButton(icon interface{}, parent *qt.QWidget) *TabToolButton {
 }
 
 func (w *TabToolButton) drawTabIcon(icon interface{}, painter *qt.QPainter, rect *qt.QRectF) {
-	fill := "#484848"
-	if common.IsDarkTheme() {
-		fill = "#eaeaea"
-	}
-	if fi, ok := icon.(common.FluentIcon); ok {
-		renderFluentIconWithFill(fi, painter, rect, fill)
-		return
-	}
 	renderFluentIcon(icon, painter, rect, common.ThemeAuto)
 }
 

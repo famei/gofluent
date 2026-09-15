@@ -233,9 +233,7 @@ func NewIconInfoBadge(parent *qt.QWidget, level InfoLevel) *IconInfoBadge {
 		iconRect := qt.NewQRectF4(float64(b.Width()-iw)/2, float64(b.Height()-ih)/2, float64(iw), float64(ih))
 		defer iconRect.Delete()
 
-		if fi, ok := b.iconSource.(common.FluentIcon); ok {
-			renderFluentIcon(fi, painter, iconRect, reversedTheme())
-		} else if b.iconSource != nil {
+		if b.iconSource != nil {
 			renderFluentIcon(b.iconSource, painter, iconRect, common.ThemeAuto)
 		}
 		painter.End()

@@ -375,21 +375,6 @@ func (w *HyperlinkButton) Url() *qt.QUrl { return w.url }
 func (w *HyperlinkButton) SetUrl(url string) { w.url = qt.NewQUrl3(url) }
 
 func (w *HyperlinkButton) drawIconHyperlink(icon interface{}, painter *qt.QPainter, rect *qt.QRectF) {
-	if fi, ok := icon.(common.FluentIcon); ok {
-		if w.IsEnabled() {
-			c := common.ThemeColorPrimary.Color()
-			defer c.Delete()
-			renderFluentIconWithFill(fi, painter, rect, c.Name())
-		} else {
-			if common.IsDarkTheme() {
-				painter.SetOpacity(0.3628)
-			} else {
-				painter.SetOpacity(0.36)
-			}
-			fi.Render(painter, rect, common.ThemeAuto)
-		}
-		return
-	}
 	if !w.IsEnabled() {
 		if common.IsDarkTheme() {
 			painter.SetOpacity(0.3628)

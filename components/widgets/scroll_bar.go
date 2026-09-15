@@ -17,7 +17,7 @@ type ArrowButton struct {
 	opacity    float64
 }
 
-// NewArrowButton builds an arrow button from a FluentIcon.
+// NewArrowButton builds an arrow button from a fluent icon.
 func NewArrowButton(icon common.FluentIconBase, parent *qt.QWidget) *ArrowButton {
 	w := &ArrowButton{
 		QToolButton: qt.NewQToolButton(parent),

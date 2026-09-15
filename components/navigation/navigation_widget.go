@@ -6,19 +6,8 @@ import (
 
 	"github.com/famei/gofluent/common"
 	"github.com/famei/gofluent/components/widgets"
-	"github.com/famei/gofluent/resources"
 	qt "github.com/mappu/miqt/qt"
 )
-
-// renderIconFill renders a FluentIcon recolored to the given hex fill (the Go
-// equivalent of FluentIcon.render(painter, rect, fill="#rrggbb")).
-func renderIconFill(icon common.FluentIcon, painter *qt.QPainter, rect *qt.QRectF, fill string) {
-	raw := resources.IconSVG(string(icon), common.GetIconColor(common.ThemeAuto, false))
-	if len(raw) == 0 {
-		return
-	}
-	common.DrawSvgIcon([]byte(common.RecolorSvg(string(raw), fill)), painter, rect)
-}
 
 // navigationSeparatorPtrs tracks live NavigationSeparator instances by their
 // C++ pointer so NavigationItemLayout can re-anchor them to x=0.

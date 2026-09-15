@@ -8,15 +8,13 @@ import (
 	qt "github.com/mappu/miqt/qt"
 )
 
-// renderFluentIcon draws a FluentIcon into painter at rect using the given
+// renderFluentIcon draws a fluent icon into painter at rect using the given
 // theme (ThemeAuto follows the current theme). Every FluentIconBase honours the
 // theme, which is what lets a caller ask for the reversed color (e.g. a checked
 // command-bar button drawn on the accent background); other sources are handed
 // to common.DrawIcon, which paints a pre-rendered pixmap as it is.
 func renderFluentIcon(icon interface{}, painter *qt.QPainter, rect *qt.QRectF, theme common.Theme) {
 	switch v := icon.(type) {
-	case common.FluentIcon:
-		v.Render(painter, rect, theme)
 	case common.FluentIconBase:
 		v.Render(painter, rect, theme)
 	default:
@@ -24,16 +22,17 @@ func renderFluentIcon(icon interface{}, painter *qt.QPainter, rect *qt.QRectF, t
 	}
 }
 
-// renderFluentIconWithFill renders a FluentIcon recolored to the given hex fill
-// color (the Go equivalent of FluentIcon.render(..., fill="#rrggbb")).
+// renderFluentIconWithFill draws a fluent icon in a fixed color instead of the
+// theme foreground (used for the accent buttons' glyphs and the grey scroll-bar
+// arrows).
 func renderFluentIconWithFill(icon common.FluentIconBase, painter *qt.QPainter, rect *qt.QRectF, fill string) {
-	//raw := resources.IconSVG(string(icon), common.GetIconColor(common.ThemeAuto, false))
-	//if len(raw) == 0 {
-	//	return
-	//}
-	//common.DrawSvgIcon([]byte(common.RecolorSvg(string(raw), fill)), painter, rect)
+	if icon == nil {
+		return
+	}
 	if f, ok := icon.(common.SegoeFluentIcon); ok {
-		f.RenderGlyph(painter, rect, common.ThemeAuto, qt.NewQColor6(fill))
+		color := qt.NewQColor6(fill)
+		defer color.Delete()
+		f.RenderGlyph(painter, rect, common.ThemeAuto, color)
 		return
 	}
 	common.DrawIcon(icon, painter, rect)

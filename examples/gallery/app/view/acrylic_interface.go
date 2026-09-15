@@ -53,7 +53,7 @@ func NewAcrylicLabel(parent *qt.QWidget) *qt.QWidget {
 		// mouse move, which is what made dragging stutter (measured: ~40 ms per
 		// drag step instead of ~14 ms).
 	}
-
+	acrylic.RefreshAll()
 	return w1.QWidget
 }
 

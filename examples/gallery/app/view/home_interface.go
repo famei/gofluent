@@ -44,7 +44,7 @@ func NewBannerWidget(parent *qt.QWidget) *BannerWidget {
 		gallerycommon.HELP_URL,
 	)
 	b.linkCardView.AddCard(
-		gcommon.GitHub,
+		gcommon.Code,
 		"GitHub repo",
 		"The latest fluent design controls and styles for your applications.",
 		gallerycommon.REPO_URL,

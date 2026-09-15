@@ -66,13 +66,7 @@ func NewLineEditButton(icon interface{}, parent *qt.QWidget) *LineEditButton {
 			painter.SetOpacity(0.7)
 		}
 
-		if common.IsDarkTheme() {
-			renderFluentIcon(w.icon, painter, rect, common.ThemeAuto)
-		} else if fi, ok := w.icon.(common.FluentIcon); ok {
-			renderFluentIconWithFill(fi, painter, rect, "#656565")
-		} else {
-			renderFluentIcon(w.icon, painter, rect, common.ThemeAuto)
-		}
+		renderFluentIcon(w.icon, painter, rect, common.ThemeAuto)
 		painter.End()
 	})
 	return w

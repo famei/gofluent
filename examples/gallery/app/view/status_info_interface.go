@@ -74,7 +74,7 @@ func NewStatusInfoInterface(parent *qt.QWidget) *StatusInfoInterface {
 	i.AddExampleCard(tr("A closable InfoBar with long message"), infoBar.QWidget,
 		"status_info/info_bar/main.go", 0)
 
-	infoBar = widgets.NewInfoBar(gcommon.GitHub, tr("GitHub"),
+	infoBar = widgets.NewInfoBar(gcommon.Code, tr("GitHub"),
 		tr("When you look long into an abyss, the abyss looks into you."),
 		qt.Horizontal, true, -1, widgets.InfoBarPositionNone, i.QWidget)
 	infoBar.AddWidget(widgets.NewPushButtonText(tr("Action"), nil).QWidget, 0)

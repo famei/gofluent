@@ -53,7 +53,7 @@ func QSS(theme, name string) string {
 	return string(b)
 }
 
-// IconSVG returns the SVG content for a FluentIcon name and color suffix.
+// IconSVG returns the SVG content for an icon name and color suffix.
 // name is the icon enum value (e.g. "Up") and color is "black" or "white".
 func IconSVG(name, color string) []byte {
 	b, err := fs.ReadFile(Images, "images/icons/"+name+"_"+color+".svg")

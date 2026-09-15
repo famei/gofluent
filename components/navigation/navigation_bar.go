@@ -177,11 +177,7 @@ func (w *NavigationBarPushButton) drawIcon(painter *qt.QPainter) {
 	if w.selectedIcon != nil {
 		selectedIcon = w.selectedIcon
 	}
-	if fi, ok := selectedIcon.(common.FluentIcon); ok && (w.IsSelected || w.IsAboutSelected) {
-		color := fallbackThemeColor(w.lightSelectedColor, w.darkSelectedColor)
-		renderIconFill(fi, painter, rect, color.Name())
-		color.Delete()
-	} else if w.IsSelected || w.IsAboutSelected {
+	if w.IsSelected || w.IsAboutSelected {
 		common.DrawIcon(selectedIcon, painter, rect)
 	} else {
 		common.DrawIcon(w.icon, painter, rect)
