@@ -154,6 +154,12 @@ type NavigationWidget struct {
 	darkIndicatorColor  *qt.QColor
 
 	marginsFunc func() (int, int)
+	// indicatorRectFunc is the per-widget IndicatorRect override. Go has no
+	// virtual dispatch: the indicator animators only ever hold a
+	// *NavigationWidget, so an outer override (NavigationBarPushButton) has to be
+	// installed here as well, otherwise the animated indicator would use the
+	// base 3x16 geometry while the button paints its own 4x24 bar.
+	indicatorRectFunc func() *qt.QRectF
 
 	clickedSig         boolSignal
 	selectedChangedSig boolSignal
@@ -295,7 +301,11 @@ func (w *NavigationWidget) SetAboutSelected(selected bool) {
 // IndicatorRect returns the indicator geometry (caller owns the QRectF). It is
 // indented by the widget's left margin so nested tree items place the vertical
 // bar after their depth offset (mirrors navigation_widget.py indicatorRect()).
+// Widgets that override the geometry install it through indicatorRectFunc.
 func (w *NavigationWidget) IndicatorRect() *qt.QRectF {
+	if w.indicatorRectFunc != nil {
+		return w.indicatorRectFunc()
+	}
 	left, _ := w.margins()
 	return qt.NewQRectF4(float64(left), 10, 3, 16)
 }

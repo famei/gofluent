@@ -17,7 +17,7 @@ func NewAcrylicInterface(parent *qt.QWidget) *AcrylicInterface {
 	i.SetObjectName("AcrylicInterface")
 	//tr := func(s string) string { return gallerycommon.Tr("AcrylicInterface", s) }
 	box := NewAcrylicLabel(i.QWidget)
-	i.AddExampleCard("Acrylic", box, `acrylic/acrylic_opengl.go`, 0)
+	i.AddExampleCard("Acrylic", box, "acrylic/acrylic_opengl.go", codeAcrylicCard, 0)
 
 	return i
 }

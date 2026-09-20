@@ -16,14 +16,14 @@
 package main
 
 import (
-	qt "github.com/mappu/miqt/qt"
-
 	"github.com/famei/gofluent/common"
 	"github.com/famei/gofluent/components/navigation"
+	"github.com/famei/gofluent/components/widgets"
 	"github.com/famei/gofluent/examples/internal/asset"
 	"github.com/famei/gofluent/examples/internal/demo"
 	"github.com/famei/gofluent/resources"
 	gfwindow "github.com/famei/gofluent/window"
+	qt "github.com/mappu/miqt/qt"
 )
 
 // Widget is the placeholder sub-interface. The Python port hosts a
@@ -38,12 +38,16 @@ func newWidget(parent *qt.QWidget) *Widget {
 	w.SetObjectName("homeInterface")
 
 	w.vBoxLayout = qt.NewQVBoxLayout(w.QWidget)
-	w.vBoxLayout.SetContentsMargins(0, 48, 0, 0)
+	// The margins are wider than the frameless window's 5px resize border: the web
+	// view is a native child window, so it owns the mouse over the whole area it
+	// covers, and with the upstream 4px margins it covered the border and left the
+	// window practically un-resizable.
+	w.vBoxLayout.SetContentsMargins(8, 48, 8, 8)
 
 	// Placeholder for webengine.NewQWebEngineView(w.QWidget) + Load(QUrl).
-	label := qt.NewQLabel5("Qt WebEngine is not available in the MXE static Qt build.", w.QWidget)
-	label.SetAlignment(qt.AlignCenter)
-	w.vBoxLayout.AddWidget(label.QWidget)
+	wv := widgets.NewQWebEngineView(w.QWidget)
+	wv.SetUrl(`https://www.bilibili.com`)
+	w.vBoxLayout.AddWidget(wv.QWidget)
 	return w
 }
 
@@ -76,6 +80,11 @@ func (w *Window) initWindow() {
 	w.Move(wd/2-w.Width()/2, ht/2-w.Height()/2)
 
 	w.SetMicaEffectEnabled(true)
+	// The embedded browser subclasses the window procedure and answers WM_NCHITTEST
+	// itself, so both the drag and the border resize are started from Qt mouse events
+	// instead of the native hit test.
+	w.SetMouseMoveDragEnabled(true)
+	w.SetMouseMoveResizeEnabled(true)
 }
 
 func main() {

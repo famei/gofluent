@@ -27,13 +27,13 @@ func NewStatusInfoInterface(parent *qt.QWidget) *StatusInfoInterface {
 	i.stateButton = widgets.NewPushButtonText(tr("Show StateToolTip"), nil)
 	i.stateButton.OnClicked(i.onStateButtonClicked)
 	i.AddExampleCard(tr("State tool tip"), i.stateButton.QWidget,
-		"status_info/state_tool_tip/main.go", 0)
+		"components/widgets/state_tool_tip.go", codeStateToolTip, 0)
 
 	button := widgets.NewPushButtonText(tr("Button with a simple ToolTip"), nil)
 	widgets.NewToolTipFilter(button.QWidget, 300, widgets.ToolTipPositionTop)
 	button.SetToolTip(tr("Simple ToolTip"))
 	i.AddExampleCard(tr("A button with a simple ToolTip"), button.QWidget,
-		"status_info/tool_tip/main.go", 0)
+		"components/widgets/tool_tip.go", codeToolTipButton, 0)
 
 	label := widgets.NewPixmapLabel(nil)
 	pm := resource.Pixmap("kunkun.png")
@@ -45,7 +45,7 @@ func NewStatusInfoInterface(parent *qt.QWidget) *StatusInfoInterface {
 	label.SetToolTipDuration(2000)
 	label.SetFixedSize2(160, 160)
 	i.AddExampleCard(tr("A label with a ToolTip"), label.QWidget,
-		"status_info/tool_tip/main.go", 0)
+		"components/widgets/tool_tip.go", codeToolTipLabel, 0)
 
 	badgeWidget := qt.NewQWidget2()
 	badgeLayout := qt.NewQHBoxLayout(badgeWidget)
@@ -60,19 +60,19 @@ func NewStatusInfoInterface(parent *qt.QWidget) *StatusInfoInterface {
 	badgeLayout.SetSpacing(20)
 	badgeLayout.SetContentsMargins(0, 10, 0, 10)
 	i.AddExampleCard(tr("InfoBadge in different styles"), badgeWidget,
-		"status_info/info_bar/main.go", 0)
+		"components/widgets/info_badge.go", codeInfoBadge, 0)
 
 	infoBar := widgets.NewInfoBar(widgets.InfoBarIconSuccess, tr("Success"),
 		tr("The Anthem of man is the Anthem of courage."),
 		qt.Horizontal, true, -1, widgets.InfoBarPositionNone, i.QWidget)
 	i.AddExampleCard(tr("A closable InfoBar"), infoBar.QWidget,
-		"status_info/info_bar/main.go", 0)
+		"components/widgets/info_bar.go", codeInfoBar, 0)
 
 	content := tr("My name is kira yoshikake, 33 years old. Living in the villa area northeast of duwangting, unmarried. I work in Guiyou chain store. Every day I have to work overtime until 8 p.m. to go home. I don't smoke. The wine is only for a taste. Sleep at 11 p.m. for 8 hours a day. Before I go to bed, I must drink a cup of warm milk, then do 20 minutes of soft exercise, get on the bed, and immediately fall asleep. Never leave fatigue and stress until the next day. Doctors say I'm normal.")
 	infoBar = widgets.NewInfoBar(widgets.InfoBarIconWarning, tr("Warning"), content,
 		qt.Vertical, true, -1, widgets.InfoBarPositionNone, i.QWidget)
 	i.AddExampleCard(tr("A closable InfoBar with long message"), infoBar.QWidget,
-		"status_info/info_bar/main.go", 0)
+		"components/widgets/info_bar.go", codeInfoBarLongMessage, 0)
 
 	infoBar = widgets.NewInfoBar(gcommon.Code, tr("GitHub"),
 		tr("When you look long into an abyss, the abyss looks into you."),
@@ -80,7 +80,7 @@ func NewStatusInfoInterface(parent *qt.QWidget) *StatusInfoInterface {
 	infoBar.AddWidget(widgets.NewPushButtonText(tr("Action"), nil).QWidget, 0)
 	infoBar.SetCustomBackgroundColor(qt.NewQColor6("white"), qt.NewQColor6("#2a2a2a"))
 	i.AddExampleCard(tr("An InfoBar with custom icon, background color and widget."), infoBar.QWidget,
-		"status_info/info_bar/main.go", 0)
+		"components/widgets/info_bar.go", codeInfoBarCustom, 0)
 
 	w := qt.NewQWidget(i.QWidget)
 	hBoxLayout := qt.NewQHBoxLayout(w)
@@ -105,30 +105,30 @@ func NewStatusInfoInterface(parent *qt.QWidget) *StatusInfoInterface {
 	hBoxLayout.SetContentsMargins(0, 0, 0, 0)
 	hBoxLayout.SetSpacing(15)
 	i.AddExampleCard(tr("InfoBar with different pop-up locations"), w,
-		"status_info/info_bar/main.go", 0)
+		"components/widgets/info_bar.go", codeInfoBarPosition, 0)
 
 	bar := widgets.NewIndeterminateProgressBar(i.QWidget, true)
 	bar.SetFixedWidth(200)
 	card := i.AddExampleCard(tr("An indeterminate progress bar"), bar.QWidget,
-		"status_info/progress_bar/main.go", 0)
+		"components/widgets/progress_bar.go", codeIndeterminateProgressBar, 0)
 	card.TopLayout.SetContentsMargins(12, 24, 12, 24)
 	card.AdjustSize()
 
 	determinateBar := widgets.NewProgressBar(i.QWidget, true)
 	determinateBar.SetFixedWidth(200)
 	i.AddExampleCard(tr("An determinate progress bar"), NewProgressWidget(determinateBar.QProgressBar, i.QWidget).QWidget,
-		"status_info/progress_bar/main.go", 0)
+		"components/widgets/progress_bar.go", codeProgressBar, 0)
 
 	indeterminateRing := widgets.NewIndeterminateProgressRing(i.QWidget, true)
 	indeterminateRing.SetFixedSize2(70, 70)
 	i.AddExampleCard(tr("An indeterminate progress ring"), indeterminateRing.QWidget,
-		"status_info/progress_ring/main.go", 0)
+		"components/widgets/progress_ring.go", codeIndeterminateProgressRing, 0)
 
 	determinateRing := widgets.NewProgressRing(i.QWidget, true)
 	determinateRing.SetFixedSize2(80, 80)
 	determinateRing.SetTextVisible(true)
 	i.AddExampleCard(tr("An determinate progress ring"), NewProgressWidget(determinateRing.QProgressBar, i.QWidget).QWidget,
-		"status_info/progress_ring/main.go", 0)
+		"components/widgets/progress_ring.go", codeProgressRing, 0)
 	return i
 }
 

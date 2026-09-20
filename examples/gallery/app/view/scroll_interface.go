@@ -31,7 +31,7 @@ func NewScrollInterface(parent *qt.QWidget) *ScrollInterface {
 	w.SetWidget(label.QWidget)
 	w.SetFixedSize2(775, 430)
 
-	card := i.AddExampleCard(tr("Smooth scroll area"), w.QWidget, src, 0)
+	card := i.AddExampleCard(tr("Smooth scroll area"), w.QWidget, "components/widgets/scroll_area.go", codeScrollArea, 0)
 	widgets.NewToolTipFilter(card.Card.QWidget, 500, widgets.ToolTipPositionTop)
 	card.Card.SetToolTip(tr("Chitanda Eru is too hot 🥵"))
 	card.Card.SetToolTipDuration(2000)
@@ -42,7 +42,7 @@ func NewScrollInterface(parent *qt.QWidget) *ScrollInterface {
 	smooth.SetWidget(label2.QWidget)
 	smooth.SetFixedSize2(660, 540)
 
-	card = i.AddExampleCard(tr("Smooth scroll area implemented by animation"), smooth.QWidget, src, 0)
+	card = i.AddExampleCard(tr("Smooth scroll area implemented by animation"), smooth.QWidget, "components/widgets/scroll_area.go", codeSmoothScrollArea, 0)
 	widgets.NewToolTipFilter(card.Card.QWidget, 500, widgets.ToolTipPositionTop)
 	card.Card.SetToolTip(tr("Chitanda Eru is so hot 🥵🥵"))
 	card.Card.SetToolTipDuration(2000)
@@ -53,7 +53,7 @@ func NewScrollInterface(parent *qt.QWidget) *ScrollInterface {
 	single.SetWidget(label3.QWidget)
 	single.SetFixedSize2(660, 498)
 
-	card = i.AddExampleCard(tr("Single direction scroll scroll area"), single.QWidget, src, 0)
+	card = i.AddExampleCard(tr("Single direction scroll scroll area"), single.QWidget, "components/widgets/scroll_area.go", codeSingleDirectionScrollArea, 0)
 	widgets.NewToolTipFilter(card.Card.QWidget, 500, widgets.ToolTipPositionTop)
 	card.Card.SetToolTip(tr("Chitanda Eru is so hot 🥵🥵🥵"))
 	card.Card.SetToolTipDuration(2000)
@@ -63,7 +63,7 @@ func NewScrollInterface(parent *qt.QWidget) *ScrollInterface {
 	pager.SetPreviousButtonDisplayMode(widgets.PipsDisplayAlways)
 	pager.SetNextButtonDisplayMode(widgets.PipsDisplayAlways)
 	card = i.AddExampleCard(tr("Pips pager"), pager.QWidget,
-		"scroll/pips_pager/main.go", 0)
+		"components/widgets/pips_pager.go", codePipsPager, 0)
 	card.TopLayout.SetContentsMargins(12, 20, 12, 20)
 	return i
 }

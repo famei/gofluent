@@ -246,10 +246,15 @@ func NewTitleBar(parent *qt.QWidget) *TitleBar {
 
 	// The stretch keeps the system buttons pinned to the right edge; the icon
 	// and title labels are inserted before it by FluentTitleBar/SplitTitleBar.
+	//
+	// The buttons are anchored to the top: they are a fixed 46x32, and inside a
+	// taller custom title bar an unaligned layout item would centre them
+	// vertically (the buttons ended up halfway down a 70px bar instead of in the
+	// window's top-right corner).
 	t.hBoxLayout.AddStretchWithStretch(1)
-	t.hBoxLayout.AddWidget(t.minBtn.QWidget)
-	t.hBoxLayout.AddWidget(t.maxBtn.QWidget)
-	t.hBoxLayout.AddWidget(t.closeBtn.QWidget)
+	t.hBoxLayout.AddWidget3(t.minBtn.QWidget, 0, qt.AlignTop)
+	t.hBoxLayout.AddWidget3(t.maxBtn.QWidget, 0, qt.AlignTop)
+	t.hBoxLayout.AddWidget3(t.closeBtn.QWidget, 0, qt.AlignTop)
 	return t
 }
 
@@ -264,6 +269,11 @@ type FluentTitleBar struct {
 	titleLabel   *widgets.CaptionLabel
 	vBoxLayout   *qt.QVBoxLayout
 	buttonLayout *qt.QHBoxLayout
+
+	// Title icon source and the state of its theme hook (see title_icon.go).
+	iconSource common.FluentIconBase
+	iconHooked bool
+	iconGone   bool
 }
 
 // NewFluentTitleBar builds a Fluent title bar.
@@ -279,6 +289,7 @@ func NewFluentTitleBar(parent *qt.QWidget) *FluentTitleBar {
 	t.hBoxLayout.RemoveWidget(t.closeBtn.QWidget)
 
 	t.iconLabel = qt.NewQLabel(t.QWidget)
+	t.iconLabel.SetObjectName("iconLabel")
 	t.iconLabel.SetFixedSize2(18, 18)
 	t.hBoxLayout.InsertWidget3(0, t.iconLabel.QWidget, 0, qt.AlignLeft|qt.AlignVCenter)
 	t.Window().OnWindowIconChanged(func(icon *qt.QIcon) { t.SetIcon(icon) })
@@ -366,16 +377,26 @@ type SplitTitleBar struct {
 	*TitleBar
 	iconLabel  *qt.QLabel
 	titleLabel *qt.QLabel
+
+	// Title icon source and the state of its theme hook (see title_icon.go).
+	iconSource common.FluentIconBase
+	iconHooked bool
+	iconGone   bool
 }
 
 // NewSplitTitleBar builds a split title bar.
 func NewSplitTitleBar(parent *qt.QWidget) *SplitTitleBar {
 	t := &SplitTitleBar{TitleBar: NewTitleBar(parent)}
+	// The reference SplitTitleBar is 48px high (the base TitleBar is 32px): the split
+	// style keeps its icon and title bottom-aligned on purpose, and in a 32px bar that
+	// leaves them squeezed into the bottom-left corner.
+	t.SetFixedHeight(48)
 	// Object name matched by fluent_window.qss `SplitTitleBar>QLabel#titleLabel`
 	// (translated to `QWidget#splitTitleBar>QLabel#titleLabel` in style_sheet.go)
 	// so the title label gets the reference's 13px font and 5px padding.
 	t.SetObjectName("splitTitleBar")
 	t.iconLabel = qt.NewQLabel(t.QWidget)
+	t.iconLabel.SetObjectName("iconLabel")
 	t.iconLabel.SetFixedSize2(18, 18)
 	t.hBoxLayout.InsertSpacing(0, 12)
 	t.hBoxLayout.InsertWidget3(1, t.iconLabel.QWidget, 0, qt.AlignLeft|qt.AlignBottom)

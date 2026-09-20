@@ -62,7 +62,7 @@ func NewMenuInterface(parent *qt.QWidget) *MenuInterface {
 		i.createMenu(pos)
 	})
 	i.AddExampleCard(tr("Rounded corners menu"), button1.QWidget,
-		"menu/menu/main.go", 0)
+		"components/widgets/menu.go", codeMenu, 0)
 
 	button3 := widgets.NewPushButtonText(tr("Show menu"), nil)
 	button3.OnClicked(func() {
@@ -70,7 +70,7 @@ func NewMenuInterface(parent *qt.QWidget) *MenuInterface {
 		i.createCustomWidgetMenu(pos)
 	})
 	i.AddExampleCard(tr("Rounded corners menu with custom widget"), button3.QWidget,
-		"menu/widget_menu/main.go", 0)
+		"components/widgets/menu.go", codeWidgetMenu, 0)
 
 	button2 := widgets.NewPushButtonText(tr("Show menu"), nil)
 	button2.OnClicked(func() {
@@ -78,10 +78,10 @@ func NewMenuInterface(parent *qt.QWidget) *MenuInterface {
 		i.createCheckableMenu(pos)
 	})
 	i.AddExampleCard(tr("Checkable menu"), button2.QWidget,
-		"menu/menu/main.go", 0)
+		"components/widgets/menu.go", codeCheckableMenu, 0)
 
 	i.AddExampleCard(tr("Command bar"), i.createCommandBar(),
-		"menu/command_bar/main.go", 1)
+		"components/widgets/command_bar.go", codeCommandBar, 1)
 
 	widget := qt.NewQWidget(i.QWidget)
 	widgetLayout := qt.NewQVBoxLayout(widget)
@@ -98,7 +98,7 @@ func NewMenuInterface(parent *qt.QWidget) *MenuInterface {
 	widgetLayout.AddWidget(i.imageLabel.QWidget)
 
 	i.AddExampleCard(tr("Command bar flyout"), widget,
-		"menu/command_bar/main.go", 1)
+		"components/widgets/command_bar.go", codeCommandBarFlyout, 1)
 	return i
 }
 

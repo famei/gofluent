@@ -7,5 +7,6 @@
 // The package exposes the fluent control set — buttons, labels, menus, tool
 // tips, scroll bars, tab/table/tree/list views, sliders, spin boxes, switch
 // buttons, progress indicators, info bar/badge, flyout, teaching tip,
-// command bar, flip/pips pager, stacked widgets and the frameless window base.
+// command bar, flip/pips pager, stacked widgets, the Windows Explorer style
+// file table and the frameless window base.
 package widgets

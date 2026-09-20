@@ -181,6 +181,23 @@ func (d *TableItemDelegate) paintHighlight(painter *qt.QPainter, option *qt.QSty
 		}
 	}
 
+	// Qt's stylesheet style takes over item painting as soon as a stylesheet styles
+	// QTableView::item (the fluent table QSS does exactly that) and then ignores
+	// option.backgroundBrush — the field QStyledItemDelegate fills from
+	// Qt::BackgroundRole — so a background set on a table item never reached the
+	// screen. Measured: a plain QTableWidget with only the fluent QSS applied
+	// already loses it, and removing just the `background: transparent`
+	// declaration does not bring it back, so this is the style/QSS behaviour and
+	// not this delegate. The option handed to this override is also the one from
+	// *before* Qt initialises its private copy, and miqt cannot convert a QVariant
+	// to a QBrush, so the brush is read from the item itself (see
+	// itemBackgroundBrush) and painted here, with the fluent highlight composited
+	// on top so hover/pressed/selected feedback survives.
+	if itemBrush := d.itemBackgroundBrush(index); itemBrush != nil && itemBrush.Style() != qt.NoBrush {
+		painter.SetBrush(itemBrush)
+		d.drawBackground(painter, option, index)
+	}
+
 	color := qt.NewQColor11(c, c, c, alpha)
 	brush := qt.NewQBrush3(color)
 	painter.SetBrush(brush)
@@ -280,6 +297,27 @@ func (d *TableItemDelegate) drawBackground(painter *qt.QPainter, option *qt.QSty
 		adjusted := rect.Adjusted(-1, 0, 1, 0)
 		painter.DrawRectWithRect(adjusted)
 	}
+}
+
+// itemBackgroundBrush returns the background brush a cell carries, read from the
+// table item itself.
+//
+// Qt would normally pass it through QStyleOptionViewItem.backgroundBrush (filled by
+// QStyledItemDelegate::initStyleOption from Qt::BackgroundRole), but that method is
+// protected and miqt generates no QVariant->QBrush conversion, so the item is asked
+// directly. Returns nil for views that are not QTableWidgets (a TableView driven by
+// a custom model has no item to ask).
+func (d *TableItemDelegate) itemBackgroundBrush(index *qt.QModelIndex) *qt.QBrush {
+	obj := d.view.Metacast("QTableWidget")
+	if obj == nil {
+		return nil
+	}
+	table := qt.UnsafeNewQTableWidget(obj) // borrowed view of the same object — do NOT Delete
+	item := table.Item(index.Row(), index.Column())
+	if item == nil {
+		return nil
+	}
+	return item.Background() // GoGC-armed — do NOT Delete
 }
 
 // drawIndicator draws the 3px accent bar at the left of a selected row.

@@ -28,6 +28,11 @@ func NewNavigationBarPushButton(icon interface{}, text string, isSelectable bool
 		darkSelectedColor:     qt.NewQColor(),
 	}
 	w.SetFixedSize2(64, 58)
+	// The sliding indicator only holds the embedded *NavigationWidget, so the
+	// 4x24 bar geometry below must also be installed on the base widget:
+	// otherwise the animation would run with the base 3x16 rect and the strip
+	// would change size when it starts or stops moving.
+	w.NavigationWidget.indicatorRectFunc = w.IndicatorRect
 	common.SetFont(w.QWidget, 11, int(qt.QFont__Normal))
 	w.OnPaintEvent(func(super func(event *qt.QPaintEvent), event *qt.QPaintEvent) { w.paint() })
 	return w

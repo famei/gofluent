@@ -2,6 +2,7 @@ package dialog_box
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/famei/gofluent/common"
 	qt "github.com/mappu/miqt/qt"
@@ -21,6 +22,12 @@ type MaskDialogBase struct {
 	widget                *qt.QFrame
 	eventFilterHook       func(watched *qt.QObject, event *qt.QEvent)
 	showEventHook         func()
+
+	// Drop shadow of the center widget, remembered so the drag can keep the
+	// shadow inside the window (see shadowInset).
+	shadowBlurRadius float64
+	shadowOffsetX    float64
+	shadowOffsetY    float64
 }
 
 // NewMaskDialogBase builds a mask dialog base. parent is expected to be the
@@ -72,6 +79,16 @@ func (d *MaskDialogBase) SetShadowEffect(blurRadius, offsetX, offsetY float64, c
 	effect.SetColor(color)
 	d.widget.SetGraphicsEffect(nil)
 	d.widget.SetGraphicsEffect(effect.QGraphicsEffect)
+	d.shadowBlurRadius, d.shadowOffsetX, d.shadowOffsetY = blurRadius, offsetX, offsetY
+}
+
+// shadowInset reports how far the center widget's drop shadow reaches beyond the
+// widget on each side.
+func (d *MaskDialogBase) shadowInset() (left, top, right, bottom int) {
+	blur := int(math.Ceil(d.shadowBlurRadius))
+	dx := int(math.Round(d.shadowOffsetX))
+	dy := int(math.Round(d.shadowOffsetY))
+	return blur - dx, blur - dy, blur + dx, blur + dy
 }
 
 // SetMaskColor sets the window mask background color.
@@ -183,23 +200,35 @@ func (d *MaskDialogBase) handleDrag(me *qt.QMouseEvent) {
 			newX := d.widget.X() + pos.X() - d.dragX
 			newY := d.widget.Y() + pos.Y() - d.dragY
 
-			if newX < 0 {
-				newX = 0
-			}
-			if newX > d.Width()-d.widget.Width() {
-				newX = d.Width() - d.widget.Width()
-			}
-			if newY < 0 {
-				newY = 0
-			}
-			if newY > d.Height()-d.widget.Height() {
-				newY = d.Height() - d.widget.Height()
-			}
+			// Clamp by the shadow inset rather than by 0: the mask is a
+			// translucent layered window, and Qt fails its layered-window update
+			// ("UpdateLayeredWindowIndirect failed ... dirty=(...) 参数错误") as
+			// soon as the effect-expanded card region leaves the window — which is
+			// exactly what dragging the card to the mask edge used to do.
+			insetL, insetT, insetR, insetB := d.shadowInset()
+			newX = clampInt(newX, insetL, d.Width()-d.widget.Width()-insetR)
+			newY = clampInt(newY, insetT, d.Height()-d.widget.Height()-insetB)
+
 			d.widget.Move(newX, newY)
 		}
 	case qt.QEvent__MouseButtonRelease:
 		d.dragging = false
 	}
+}
+
+// clampInt clamps v into [min,max]; when the window is too small for the card
+// plus its shadow (max < min) the card is pinned to min.
+func clampInt(v, min, max int) int {
+	if max < min {
+		max = min
+	}
+	if v < min {
+		return min
+	}
+	if v > max {
+		return max
+	}
+	return v
 }
 
 // mouseEventOf downcasts a QEvent to a QMouseEvent for mouse event types. It

@@ -1229,8 +1229,8 @@ func newSplitDropButton(parent *qt.QWidget, primary bool) *ToolButton {
 //   - NewSplitPushButtonIcon(icon interface{}, text string, parent *qt.QWidget)
 type SplitPushButton struct {
 	*qt.QWidget
-	button            *PushButton
-	dropButton        *ToolButton
+	Button            *PushButton
+	DropButton        *ToolButton
 	hBox              *qt.QHBoxLayout
 	flyout            interface{}
 	onClicked         func()
@@ -1246,28 +1246,28 @@ func newSplitPushButtonBase(parent *qt.QWidget, primary bool) *SplitPushButton {
 	w.hBox.SetSpacing(0)
 	w.hBox.SetContentsMargins(0, 0, 0, 0)
 
-	w.dropButton = newSplitDropButton(w.QWidget, primary)
+	w.DropButton = newSplitDropButton(w.QWidget, primary)
 	if primary {
-		w.button = NewPrimaryPushButton(w.QWidget).PushButton
-		w.button.SetObjectName("primarySplitPushButton")
+		w.Button = NewPrimaryPushButton(w.QWidget).PushButton
+		w.Button.SetObjectName("primarySplitPushButton")
 	} else {
-		w.button = NewPushButton(w.QWidget)
-		w.button.SetObjectName("splitPushButton")
+		w.Button = NewPushButton(w.QWidget)
+		w.Button.SetObjectName("splitPushButton")
 	}
-	w.button.OnClicked(func() {
+	w.Button.OnClicked(func() {
 		if w.onClicked != nil {
 			w.onClicked()
 		}
 	})
-	w.dropButton.OnClicked(func() {
+	w.DropButton.OnClicked(func() {
 		if w.onDropDownClicked != nil {
 			w.onDropDownClicked()
 		}
 		w.showFlyout()
 	})
 
-	w.hBox.AddWidget3(w.button.QWidget, 1, qt.AlignLeft)
-	w.hBox.AddWidget(w.dropButton.QWidget)
+	w.hBox.AddWidget3(w.Button.QWidget, 1, qt.AlignLeft)
+	w.hBox.AddWidget(w.DropButton.QWidget)
 	return w
 }
 
@@ -1301,27 +1301,27 @@ func (w *SplitPushButton) SetFlyout(flyout interface{}) { w.flyout = flyout }
 
 // SetText sets the main button text.
 func (w *SplitPushButton) SetText(text string) {
-	w.button.SetText(text)
+	w.Button.SetText(text)
 	w.AdjustSize()
 }
 
 // Text returns the main button text.
-func (w *SplitPushButton) Text() string { return w.button.Text() }
+func (w *SplitPushButton) Text() string { return w.Button.Text() }
 
 // SetIcon sets the main button icon.
-func (w *SplitPushButton) SetIcon(icon interface{}) { w.button.SetIcon(icon) }
+func (w *SplitPushButton) SetIcon(icon interface{}) { w.Button.SetIcon(icon) }
 
 // Icon returns the main button icon.
-func (w *SplitPushButton) Icon() *qt.QIcon { return w.button.Icon() }
+func (w *SplitPushButton) Icon() *qt.QIcon { return w.Button.Icon() }
 
 // SetIconSize sets the main button icon size.
-func (w *SplitPushButton) SetIconSize(size *qt.QSize) { w.button.SetIconSize(size) }
+func (w *SplitPushButton) SetIconSize(size *qt.QSize) { w.Button.SetIconSize(size) }
 
 // SetDropIcon sets the drop-down button icon.
-func (w *SplitPushButton) SetDropIcon(icon interface{}) { w.dropButton.SetIcon(icon) }
+func (w *SplitPushButton) SetDropIcon(icon interface{}) { w.DropButton.SetIcon(icon) }
 
 // SetDropIconSize sets the drop-down button icon size.
-func (w *SplitPushButton) SetDropIconSize(size *qt.QSize) { w.dropButton.SetIconSize(size) }
+func (w *SplitPushButton) SetDropIconSize(size *qt.QSize) { w.DropButton.SetIconSize(size) }
 
 func (w *SplitPushButton) showFlyout() {
 	if w.flyout == nil {

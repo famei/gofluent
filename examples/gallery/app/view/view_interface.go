@@ -1,10 +1,13 @@
 package view
 
 import (
+	"fmt"
+
 	gcommon "github.com/famei/gofluent/common"
 	"github.com/famei/gofluent/components/widgets"
 	gallerycommon "github.com/famei/gofluent/examples/gallery/app/common"
 	"github.com/famei/gofluent/examples/gallery/app/resource"
+	"github.com/famei/gofluent/examples/internal/filetabledata"
 	qt "github.com/mappu/miqt/qt"
 )
 
@@ -16,19 +19,21 @@ type ViewInterface struct {
 // NewViewInterface builds the view interface.
 func NewViewInterface(parent *qt.QWidget) *ViewInterface {
 	t := gallerycommon.NewTranslator()
-	i := &ViewInterface{GalleryInterface: NewGalleryInterface(t.View, "qfluentwidgets.components.widgets", parent)}
+	i := &ViewInterface{GalleryInterface: NewGalleryInterface(t.View, "github.com/famei/gofluent/components/widgets", parent)}
 	i.SetObjectName("viewInterface")
 
 	tr := func(s string) string { return gallerycommon.Tr("ViewInterface", s) }
 
 	i.AddExampleCard(tr("A simple ListView"), NewListFrame(i.QWidget).QWidget,
-		"view/list_view/main.go", 0)
+		"components/widgets/list_view.go", codeListWidget, 0)
 	i.AddExampleCard(tr("A simple TableView"), NewTableFrame(i.QWidget).QWidget,
-		"view/table_view/main.go", 0)
+		"components/widgets/table_view.go", codeTableWidget, 0)
 	i.AddExampleCard(tr("A simple TreeView"), NewTreeFrame(i.QWidget, false).QWidget,
-		"view/tree_view/main.go", 0)
+		"components/widgets/tree_view.go", codeTreeWidget, 0)
 	i.AddExampleCard(tr("A TreeView with Multi-selection enabled"), NewTreeFrame(i.QWidget, true).QWidget,
-		"view/tree_view/main.go", 0)
+		"components/widgets/tree_view.go", codeTreeWidgetMultiSelect, 0)
+	i.AddExampleCard(tr("A Windows Explorer style FileTable"), NewFileTableFrame(i.QWidget).QWidget,
+		"components/widgets/FileTableItemDelegate.go", codeFileTable, 0)
 
 	w := widgets.NewHorizontalFlipView(i.QWidget)
 	w.AddImages([]interface{}{
@@ -38,7 +43,7 @@ func NewViewInterface(parent *qt.QWidget) *ViewInterface {
 		resource.Pixmap("Shoko4.jpg"),
 	})
 	i.AddExampleCard(tr("Flip view"), w.QWidget,
-		"view/flip_view/main.go", 0)
+		"components/widgets/flip_view.go", codeFlipView, 0)
 	return i
 }
 
@@ -141,6 +146,9 @@ func NewTreeFrame(parent *qt.QWidget, enableCheck bool) *TreeFrame {
 	f.SetFixedSize2(300, 380)
 
 	if enableCheck {
+		// The card demonstrates multi-selection: on top of the check boxes the
+		// tree also gets the extended selection mode.
+		f.tree.SetSelectionMode(qt.QAbstractItemView__ExtendedSelection)
 		setTreeItemsCheckable(f.tree)
 	}
 	return f
@@ -230,5 +238,39 @@ func NewTableFrame(parent *qt.QWidget) *TableFrame {
 
 	f.SetFixedSize2(625, 440)
 	f.ResizeColumnsToContents()
+	return f
+}
+
+// FileTableFrame shows the Windows Explorer style FileTable (see
+// examples/view/file_table). Drag the empty area or an unselected row to draw
+// the marquee selection; dragging an already selected row reports the drag to
+// the application instead.
+type FileTableFrame struct {
+	*qt.QFrame
+	table  *widgets.FileTable
+	status *widgets.CaptionLabel
+}
+
+// NewFileTableFrame builds a file table frame filled with the shared demo
+// directory listing.
+func NewFileTableFrame(parent *qt.QWidget) *FileTableFrame {
+	f := &FileTableFrame{QFrame: qt.NewQFrame(parent)}
+
+	vBoxLayout := qt.NewQVBoxLayout(f.QWidget)
+	vBoxLayout.SetContentsMargins(0, 0, 0, 0)
+	vBoxLayout.SetSpacing(6)
+
+	f.table = widgets.NewFileTable(f.QWidget)
+	filetabledata.Fill(f.table, 400)
+	vBoxLayout.AddWidget2(f.table.QWidget, 1)
+
+	f.status = widgets.NewCaptionLabelText("拖动已选中的行会调用 SetItemDragHandler", f.QWidget)
+	vBoxLayout.AddWidget(f.status.QWidget)
+
+	f.table.SetItemDragHandler(func(rows []int, x, y int) {
+		f.status.SetText(fmt.Sprintf("拖拽 %d 个已选中项目，光标屏幕坐标 (%d, %d)", len(rows), x, y))
+	})
+
+	f.SetFixedSize2(660, 420)
 	return f
 }

@@ -39,19 +39,19 @@ func NewNavigationViewInterface(parent *qt.QWidget) *NavigationViewInterface {
 		breadcrumb.AddItem(item, item)
 	}
 	i.AddExampleCard(gallerycommon.Tr("NavigationViewInterface", "Breadcrumb bar"), breadcrumb.QWidget,
-		"navigation/breadcrumb_bar/main.go", 1)
+		"components/navigation/breadcrumb.go", codeBreadcrumbBar, 1)
 
 	i.AddExampleCard(gallerycommon.Tr("NavigationViewInterface", "A basic pivot"), NewPivotInterface(i.QWidget).QWidget,
-		"navigation/pivot/main.go", 0)
+		"components/navigation/pivot.go", codePivot, 0)
 
 	i.AddExampleCard(gallerycommon.Tr("NavigationViewInterface", "A segmented control"), NewSegmentedInterface(i.QWidget).QWidget,
-		"navigation/segmented_widget/main.go", 0)
+		"components/navigation/segmented_widget.go", codeSegmentedWidget, 0)
 
 	i.AddExampleCard(gallerycommon.Tr("NavigationViewInterface", "Another segmented control"), i.createToggleToolWidget(),
-		"navigation/segmented_tool_widget/main.go", 0)
+		"components/navigation/segmented_widget.go", codeSegmentedToolWidget, 0)
 
 	card := i.AddExampleCard(gallerycommon.Tr("NavigationViewInterface", "A tab bar"), NewTabInterface(i.QWidget).QWidget,
-		"navigation/tab_view/main.go", 1)
+		"components/widgets/tab_view.go", codeTabBar, 1)
 	card.TopLayout.SetContentsMargins(12, 0, 0, 0)
 	return i
 }

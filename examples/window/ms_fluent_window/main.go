@@ -61,11 +61,11 @@ func newWindow() *Window {
 }
 
 func (w *Window) initNavigation() {
-	w.AddSubInterface(w.homeInterface.QWidget, common.Home, "主页", common.HomeFill, navigation.NavigationItemPositionTop, false)
-	w.AddSubInterface(w.appInterface.QWidget, common.Application, "应用", nil, navigation.NavigationItemPositionTop, false)
+	w.AddSubInterface(w.homeInterface.QWidget, common.Home, "主页", common.Home, navigation.NavigationItemPositionTop, false)
+	w.AddSubInterface(w.appInterface.QWidget, common.AppIconDefault, "应用", nil, navigation.NavigationItemPositionTop, false)
 	w.AddSubInterface(w.videoInterface.QWidget, common.Video, "视频", nil, navigation.NavigationItemPositionTop, false)
 
-	w.AddSubInterface(w.libraryInterface.QWidget, common.Library, "库", common.LibraryFill, navigation.NavigationItemPositionBottom, false)
+	w.AddSubInterface(w.libraryInterface.QWidget, common.Library, "库", common.Library, navigation.NavigationItemPositionBottom, false)
 	w.NavigationBar().AddItem(
 		"Help",
 		common.Help,

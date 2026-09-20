@@ -24,14 +24,16 @@ func NewLayoutInterface(parent *qt.QWidget) *LayoutInterface {
 	i.AddExampleCard(
 		tr("Flow layout without animation"),
 		i.createWidget(false),
-		"layout/flow_layout/main.go",
+		"components/layout/flow_layout.go",
+		codeFlowLayout,
 		1,
 	)
 
 	i.AddExampleCard(
 		tr("Flow layout with animation"),
 		i.createWidget(true),
-		"layout/flow_layout/main.go",
+		"components/layout/flow_layout.go",
+		codeFlowLayoutAnimated,
 		1,
 	)
 	return i

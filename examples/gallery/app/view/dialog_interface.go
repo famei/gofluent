@@ -33,42 +33,42 @@ func NewDialogInterface(parent *qt.QWidget) *DialogInterface {
 
 	button := widgets.NewPushButtonText(tr("Show dialog"), nil)
 	button.OnClicked(i.showDialog)
-	i.AddExampleCard(tr("A frameless message box"), button.QWidget, dialogSrc, 0)
+	i.AddExampleCard(tr("A frameless message box"), button.QWidget, "components/dialog_box/dialog.go", codeDialog, 0)
 
 	button = widgets.NewPushButtonText(tr("Show dialog"), nil)
 	button.OnClicked(i.showMessageDialog)
 	i.AddExampleCard(tr("A message box with mask"), button.QWidget,
-		"dialog_flyout/message_dialog/main.go", 0)
+		"components/dialog_box/dialog.go", codeMessageBox, 0)
 
 	button = widgets.NewPushButtonText(tr("Show dialog"), nil)
 	button.OnClicked(i.showCustomDialog)
 	i.AddExampleCard(tr("A custom message box"), button.QWidget,
-		"dialog_flyout/custom_message_box/main.go", 0)
+		"components/dialog_box/message_box_base.go", codeCustomMessageBox, 0)
 
 	button = widgets.NewPushButtonText(tr("Show dialog"), nil)
 	button.OnClicked(i.showColorDialog)
 	i.AddExampleCard(tr("A color dialog"), button.QWidget,
-		"dialog_flyout/color_dialog/main.go", 0)
+		"components/dialog_box/color_dialog.go", codeColorDialog, 0)
 
 	i.simpleFlyoutButton = widgets.NewPushButtonText(tr("Show flyout"), nil)
 	i.simpleFlyoutButton.OnClicked(i.showSimpleFlyout)
 	i.AddExampleCard(tr("A simple flyout"), i.simpleFlyoutButton.QWidget,
-		"dialog_flyout/flyout/main.go", 0)
+		"components/widgets/flyout.go", codeSimpleFlyout, 0)
 
 	i.complexFlyoutButton = widgets.NewPushButtonText(tr("Show flyout"), nil)
 	i.complexFlyoutButton.OnClicked(i.showComplexFlyout)
 	i.AddExampleCard(tr("A flyout with image and button"), i.complexFlyoutButton.QWidget,
-		"dialog_flyout/flyout/main.go", 0)
+		"components/widgets/flyout.go", codeComplexFlyout, 0)
 
 	i.teachingButton = widgets.NewPushButtonText(tr("Show teaching tip"), nil)
 	i.teachingButton.OnClicked(i.showBottomTeachingTip)
 	i.AddExampleCard(tr("A teaching tip"), i.teachingButton.QWidget,
-		"dialog_flyout/teaching_tip/main.go", 0)
+		"components/widgets/teaching_tip.go", codeTeachingTip, 0)
 
 	i.teachingRightButton = widgets.NewPushButtonText(tr("Show teaching tip"), nil)
 	i.teachingRightButton.OnClicked(i.showLeftBottomTeachingTip)
 	i.AddExampleCard(tr("A teaching tip with image and button"), i.teachingRightButton.QWidget,
-		"dialog_flyout/teaching_tip/main.go", 0)
+		"components/widgets/teaching_tip.go", codeTeachingTipImage, 0)
 	return i
 }
 

@@ -137,12 +137,23 @@ type ExampleCard struct {
 	vBoxLayout *layout.ExpandLayout
 	cardLayout *layout.ExpandLayout
 	stretch    int
+	// sourcePath is the Go file that implements the control shown on the card
+	// (e.g. components/widgets/button.go), displayed in the expandable source
+	// area. It deliberately points at the implementation and not at an example
+	// main.go: every example is a main.go, which says nothing about the control.
 	sourcePath string
+	// code is the pseudo-code shown under the card. It belongs to the card (and
+	// not to sourcePath) because several cards share one control family (23
+	// button variants, 5 spin box variants, ...): a path keyed snippet would show
+	// the code of whichever variant happened to be curated for that file.
+	code string
 }
 
-// NewExampleCard builds an example card.
-func NewExampleCard(title string, widget *qt.QWidget, sourcePath string, stretch int, parent *qt.QWidget) *ExampleCard {
-	card := &ExampleCard{QWidget: qt.NewQWidget(parent), Widget: widget, stretch: stretch, sourcePath: sourcePath}
+// NewExampleCard builds an example card. code is the pseudo-code snippet shown
+// in the expandable source area and sourcePath the implementation file it links
+// to (see the field comments above).
+func NewExampleCard(title string, widget *qt.QWidget, sourcePath, code string, stretch int, parent *qt.QWidget) *ExampleCard {
+	card := &ExampleCard{QWidget: qt.NewQWidget(parent), Widget: widget, stretch: stretch, sourcePath: sourcePath, code: code}
 	card.titleLabel = widgets.NewStrongBodyLabelText(title, card.QWidget)
 	card.Card = qt.NewQFrame(card.QWidget)
 	card.sourceCard = settings.NewExpandSettingCard(gcommon.Code, gallerycommon.Tr("ExampleCard", "Source code"), sourcePath, card.Card.QWidget)
@@ -266,7 +277,7 @@ func (c *ExampleCard) initCodeView() {
 	c.codeEdit.SetTextInteractionFlags(qt.TextSelectableByMouse | qt.TextSelectableByKeyboard)
 	c.codeEdit.SetFrameShape(qt.QFrame__NoFrame)
 	c.codeEdit.SetObjectName("sourceCodeEdit")
-	c.codeEdit.SetPlainText(codeSnippet(c.sourcePath))
+	c.codeEdit.SetPlainText(c.code)
 	c.codeEdit.SetVerticalScrollBarPolicy(qt.ScrollBarAlwaysOff)
 	c.codeEdit.SetHorizontalScrollBarPolicy(qt.ScrollBarAlwaysOff)
 
@@ -301,7 +312,7 @@ func (c *ExampleCard) snippetHeight() int {
 	const lineH = 18
 	const charsPerLine = 90
 	total := 0
-	for _, ln := range strings.Split(codeSnippet(c.sourcePath), "\n") {
+	for _, ln := range strings.Split(c.code, "\n") {
 		n := len(ln)/charsPerLine + 1
 		total += n
 	}
@@ -353,9 +364,12 @@ func NewGalleryInterface(title, subtitle string, parent *qt.QWidget) *GalleryInt
 	return g
 }
 
-// AddExampleCard adds an example card and returns it.
-func (g *GalleryInterface) AddExampleCard(title string, widget *qt.QWidget, sourcePath string, stretch int) *ExampleCard {
-	card := NewExampleCard(title, widget, sourcePath, stretch, g.View)
+// AddExampleCard adds an example card and returns it. code is the pseudo-code
+// snippet shown in the expandable source area and sourcePath the control's
+// implementation file; both must describe the demo widget on this card (see
+// snippet.go).
+func (g *GalleryInterface) AddExampleCard(title string, widget *qt.QWidget, sourcePath, code string, stretch int) *ExampleCard {
+	card := NewExampleCard(title, widget, sourcePath, code, stretch, g.View)
 	g.VBoxLayout.AddWidget(card.QWidget)
 	return card
 }

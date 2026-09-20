@@ -18,6 +18,10 @@ var (
 	procGetSystemMetrics              = user32.NewProc("GetSystemMetrics")
 	procSendMessageW                  = user32.NewProc("SendMessageW")
 	procReleaseCapture                = user32.NewProc("ReleaseCapture")
+	procGetCursorPos                  = user32.NewProc("GetCursorPos")
+	procRedrawWindow                  = user32.NewProc("RedrawWindow")
+	procGetParent                     = user32.NewProc("GetParent")
+	procSetWindowPos                  = user32.NewProc("SetWindowPos")
 	procGetWindowLongPtrW             = user32.NewProc("GetWindowLongPtrW")
 	procSetWindowLongPtrW             = user32.NewProc("SetWindowLongPtrW")
 	procCallWindowProcW               = user32.NewProc("CallWindowProcW")
@@ -63,6 +67,40 @@ func SendMessage(hwnd HWND, msg uint32, wParam, lParam uintptr) uintptr {
 // ReleaseCapture releases the mouse capture from the current thread's window.
 func ReleaseCapture() {
 	_, _, _ = procReleaseCapture.Call()
+}
+
+// RedrawWindow invalidates the window - optionally its frame and children -
+// immediately. Used after moving a frameless window: DWM recomputes the frame and its
+// shadow on a size change but not always on a move, which leaves a stale frame/shadow
+// painted where the window used to be.
+func RedrawWindow(hwnd HWND, flags uint32) {
+	_, _, _ = procRedrawWindow.Call(uintptr(hwnd), 0, 0, uintptr(flags))
+}
+
+// GetParent returns the parent (owner) HWND of hwnd (0 when it has none).
+func GetParent(hwnd HWND) HWND {
+	r, _, _ := procGetParent.Call(uintptr(hwnd))
+	return HWND(r)
+}
+
+// SetWindowPos moves/resizes a window. For a child window the coordinates are relative
+// to its parent's client area; for an owned or top-level window they are screen
+// coordinates.
+func SetWindowPos(hwnd HWND, x, y, w, h int, flags uint32) {
+	_, _, _ = procSetWindowPos.Call(uintptr(hwnd), 0, uintptr(int32(x)), uintptr(int32(y)),
+		uintptr(int32(w)), uintptr(int32(h)), uintptr(flags))
+}
+
+// GetCursorPos returns the cursor position in physical screen coordinates, the form
+// WM_NCLBUTTONDOWN expects in its lParam (Qt's QCursor::pos is in logical pixels and
+// would be wrong on a scaled display).
+func GetCursorPos() (x, y int32) {
+	var p POINT
+	r, _, _ := procGetCursorPos.Call(uintptr(unsafe.Pointer(&p)))
+	if r == 0 {
+		return 0, 0
+	}
+	return p.X, p.Y
 }
 
 // GetWindowLongPtr retrieves a window-long value (style, ex-style, ...).

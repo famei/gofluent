@@ -14,7 +14,7 @@ type TextInterface struct {
 // NewTextInterface builds the text interface.
 func NewTextInterface(parent *qt.QWidget) *TextInterface {
 	t := gallerycommon.NewTranslator()
-	i := &TextInterface{GalleryInterface: NewGalleryInterface(t.Text, "qfluentwidgets.components.widgets", parent)}
+	i := &TextInterface{GalleryInterface: NewGalleryInterface(t.Text, "github.com/famei/gofluent/components/widgets", parent)}
 	i.SetObjectName("textInterface")
 
 	tr := func(s string) string { return gallerycommon.Tr("TextInterface", s) }
@@ -24,7 +24,7 @@ func NewTextInterface(parent *qt.QWidget) *TextInterface {
 	lineEdit := widgets.NewLineEdit(i.QWidget)
 	lineEdit.SetText(tr("ko no dio da！"))
 	lineEdit.SetClearButtonEnabled(true)
-	i.AddExampleCard(tr("A LineEdit with a clear button"), lineEdit.QWidget, src, 0)
+	i.AddExampleCard(tr("A LineEdit with a clear button"), lineEdit.QWidget, "components/widgets/line_edit.go", codeLineEdit, 0)
 
 	searchEdit := widgets.NewSearchLineEdit(i.QWidget)
 	searchEdit.SetPlaceholderText(tr("Type a stand name"))
@@ -54,23 +54,23 @@ func NewTextInterface(parent *qt.QWidget) *TextInterface {
 	completer.SetCaseSensitivity(qt.CaseInsensitive)
 	completer.SetMaxVisibleItems(10)
 	searchEdit.SetCompleter(completer)
-	i.AddExampleCard(tr("A autosuggest line edit"), searchEdit.QWidget, src, 0)
+	i.AddExampleCard(tr("A autosuggest line edit"), searchEdit.QWidget, "components/widgets/line_edit.go", codeSearchLineEdit, 0)
 
 	passwordLineEdit := widgets.NewPasswordLineEdit(i.QWidget)
 	passwordLineEdit.SetFixedWidth(230)
 	passwordLineEdit.SetPlaceholderText(tr("Enter your password"))
-	i.AddExampleCard(tr("A password line edit"), passwordLineEdit.QWidget, src, 0)
+	i.AddExampleCard(tr("A password line edit"), passwordLineEdit.QWidget, "components/widgets/line_edit.go", codePasswordLineEdit, 0)
 
 	const ssrc = "text/spin_box/main.go"
-	i.AddExampleCard(tr("A SpinBox with a spin button"), widgets.NewSpinBox(i.QWidget).QWidget, ssrc, 0)
-	i.AddExampleCard(tr("A DoubleSpinBox with a spin button"), widgets.NewDoubleSpinBox(i.QWidget).QWidget, ssrc, 0)
-	i.AddExampleCard(tr("A DateEdit with a spin button"), widgets.NewDateEdit(i.QWidget).QWidget, ssrc, 0)
-	i.AddExampleCard(tr("A TimeEdit with a spin button"), widgets.NewTimeEdit(i.QWidget).QWidget, ssrc, 0)
-	i.AddExampleCard(tr("A DateTimeEdit with a spin button"), widgets.NewDateTimeEdit(i.QWidget).QWidget, ssrc, 0)
+	i.AddExampleCard(tr("A SpinBox with a spin button"), widgets.NewSpinBox(i.QWidget).QWidget, "components/widgets/spin_box.go", codeSpinBox, 0)
+	i.AddExampleCard(tr("A DoubleSpinBox with a spin button"), widgets.NewDoubleSpinBox(i.QWidget).QWidget, "components/widgets/spin_box.go", codeDoubleSpinBox, 0)
+	i.AddExampleCard(tr("A DateEdit with a spin button"), widgets.NewDateEdit(i.QWidget).QWidget, "components/widgets/spin_box.go", codeDateEdit, 0)
+	i.AddExampleCard(tr("A TimeEdit with a spin button"), widgets.NewTimeEdit(i.QWidget).QWidget, "components/widgets/spin_box.go", codeTimeEdit, 0)
+	i.AddExampleCard(tr("A DateTimeEdit with a spin button"), widgets.NewDateTimeEdit(i.QWidget).QWidget, "components/widgets/spin_box.go", codeDateTimeEdit, 0)
 
 	textEdit := widgets.NewTextEdit(i.QWidget)
 	textEdit.SetMarkdown("## Steel Ball Run \n * Johnny Joestar 🦄 \n * Gyro Zeppeli 🐴 ")
 	textEdit.SetFixedHeight(150)
-	i.AddExampleCard(tr("A simple TextEdit"), textEdit.QWidget, src, 1)
+	i.AddExampleCard(tr("A simple TextEdit"), textEdit.QWidget, "components/widgets/line_edit.go", codeTextEdit, 1)
 	return i
 }

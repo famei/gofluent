@@ -186,17 +186,24 @@ func (d *MenuItemDelegate) drawChevron(painter *qt.QPainter, option *qt.QStyleOp
 	painter.SetRenderHints(qt.QPainter__Antialiasing)
 	rect := option.Rect() // GoGC-armed — do NOT Delete
 
-	// The chevron follows the item's preferred width (the end of the text), not
-	// the full viewport width. menu.py paints it inside SubMenuItemWidget, whose
-	// width is the item's sizeHint (the text width), so the chevron sits right
-	// after the text — not at the menu's right edge.
-	w := rect.Width()
-	if item := d.menu.view.ItemFromIndex(index); item != nil {
-		if s := item.SizeHint(); s != nil { // GoGC-armed — do NOT Delete
-			w = s.Width()
-		}
-	}
-	rectF := qt.NewQRectF4(float64(rect.X()+w-15), float64(rect.Y()+rect.Height()/2-4), 9, 9)
+	// The chevron sits a fixed inset from the row's right edge, not at the end of
+	// the item's own width: item size hints are text-based while every row is
+	// stretched to the viewport width, so using the size hint (as the Python port
+	// did through SubMenuItemWidget, whose width is the item width) left the
+	// chevron flush with the right edge in the menu whose widest row happened to be
+	// that same row, and floating mid-row in any wider menu. rect.Right()-19 keeps
+	// the 9px chevron 10px inside the edge (the QSS item padding) — the position it
+	// already had in the flush case.
+	// The chevron sits a fixed inset from the row's right edge, not at the end of
+	// the item's own width: item size hints are text-based while every row is
+	// stretched to the viewport width, so anchoring it to the size hint (as the
+	// Python port did, through SubMenuItemWidget whose width is the item width)
+	// left the chevron flush with the right edge only in a menu whose widest row
+	// happened to be that same row, and floating mid-row in any wider menu — the
+	// same sub-menu row showed an 8px or a 175px gap depending on the menu width.
+	// rect.Right()-22 leaves the 6px-wide glyph about 16px clear of the edge, on
+	// the same trailing column as a shortcut (whose text ends 20px inside).
+	rectF := qt.NewQRectF4(float64(rect.Right()-22), float64(rect.Y()+rect.Height()/2-4), 9, 9)
 	defer rectF.Delete()
 	renderFluentIcon(common.ChevronRight, painter, rectF, common.ThemeAuto)
 	painter.Restore()

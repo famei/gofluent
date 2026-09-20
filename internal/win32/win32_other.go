@@ -19,6 +19,9 @@ func SendMessage(hwnd HWND, msg uint32, wParam, lParam uintptr) uintptr { return
 
 func ReleaseCapture() {}
 
+// GetCursorPos is a no-op off Windows.
+func GetCursorPos() (x, y int32) { return 0, 0 }
+
 func GetWindowLongPtr(hwnd HWND, index int) uintptr { return 0 }
 
 func SetWindowLongPtr(hwnd HWND, index int, newLong uintptr) uintptr { return 0 }
