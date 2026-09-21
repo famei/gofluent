@@ -1,7 +1,4 @@
 {
-    "MainWindow": {
-        "Language": "Auto"
-    },
     "QFluentWidgets": {
         "FontFamilies": [
             "Segoe UI",

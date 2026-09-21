@@ -110,9 +110,9 @@ func newWindow() *Window {
 	// title and the system buttons, exactly like the Python demo's
 	// CustomTitleBar.insertLayout(4)/insertWidget(5).
 	titleBar := w.MSFTitleBar()
-	searchButton := widgets.NewTransparentToolButtonIcon(common.SearchMirror, titleBar.QWidget)
-	forwardButton := widgets.NewTransparentToolButtonIcon(common.RightArrow, titleBar.QWidget)
-	backButton := widgets.NewTransparentToolButtonIcon(common.LeftArrow, titleBar.QWidget)
+	searchButton := widgets.NewTransparentToolButtonIcon(common.Search, titleBar.QWidget)
+	forwardButton := widgets.NewTransparentToolButtonIcon(common.AlignRight, titleBar.QWidget)
+	backButton := widgets.NewTransparentToolButtonIcon(common.AlignLeft, titleBar.QWidget)
 	forwardButton.SetDisabled(true)
 
 	toolButtonLayout := qt.NewQHBoxLayout2()
@@ -154,11 +154,11 @@ func newWindow() *Window {
 }
 
 func (w *Window) initNavigation() {
-	w.AddSubInterface(w.homeContainer, common.Home, "主页", common.HomeFill, navigation.NavigationItemPositionTop, false)
-	w.AddSubInterface(w.appInterface.QWidget, common.Application, "应用", nil, navigation.NavigationItemPositionTop, false)
+	w.AddSubInterface(w.homeContainer, common.Home, "主页", common.Home, navigation.NavigationItemPositionTop, false)
+	w.AddSubInterface(w.appInterface.QWidget, common.AppIconDefault, "应用", nil, navigation.NavigationItemPositionTop, false)
 	w.AddSubInterface(w.videoInterface.QWidget, common.Video, "视频", nil, navigation.NavigationItemPositionTop, false)
 
-	w.AddSubInterface(w.libraryInterface.QWidget, common.Library, "库", common.LibraryFill, navigation.NavigationItemPositionBottom, false)
+	w.AddSubInterface(w.libraryInterface.QWidget, common.Library, "库", common.Library, navigation.NavigationItemPositionBottom, false)
 	w.NavigationBar().AddItem(
 		"Help",
 		common.Help,

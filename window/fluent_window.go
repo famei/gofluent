@@ -449,7 +449,20 @@ func NewFluentWidget(parent *qt.QWidget) *FluentWidget {
 
 	w.SetMicaEffectEnabled(true)
 	w.SetTitleBar(NewFluentWidgetTitleBar(w.QWidget).QWidget)
-	common.QConfigInstance.OnThemeChangedFinished(w.onThemeChangedFinished)
+
+	// The theme listener is a Go closure, not a Qt signal-slot connection, so Qt
+	// does not disconnect it when the window is destroyed: closing the window,
+	// deleting it with DeleteLater() and switching the theme afterwards would call
+	// updateBackgroundColor -> Update() on the freed widget and crash. Track
+	// destruction and no-op the listener once the window is gone.
+	destroyed := false
+	w.OnDestroyed(func() { destroyed = true })
+	common.QConfigInstance.OnThemeChangedFinished(func() {
+		if destroyed {
+			return
+		}
+		w.onThemeChangedFinished()
+	})
 	w.OnDestroyed(func() {
 		if w.bgAni != nil {
 			w.bgAni.Delete()

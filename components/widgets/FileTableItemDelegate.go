@@ -1157,15 +1157,19 @@ func (self *FileTable) clearMarqueeSelection() {
 }
 
 // marqueeRows returns the first and the last row touched by the marquee
-// rectangle. The rectangle can reach above or below the viewport while the
-// table scrolls, so the rows hidden by the edges are walked back from the
-// visible ones.
+// rectangle (viewport coordinates). The rectangle can reach above or below the
+// viewport while the table auto scrolls, so the rows hidden by the edges are
+// walked back from the visible ones; a rectangle that only covers the blank area
+// under the items touches no row at all.
 func (self *FileTable) marqueeRows(rect *qt.QRect) (int, int) {
 	if self.RowCount() == 0 || !self.marqueeTouchesItems(rect) {
 		return -1, -1
 	}
+
 	first := self.RowAt(rect.Top())
 	if rect.Top() < 0 {
+		// The marquee reaches above the viewport: walk the rows hidden by the
+		// edge back from the first visible one.
 		row := self.RowAt(0)
 		if row < 0 {
 			row = 0
@@ -1176,14 +1180,25 @@ func (self *FileTable) marqueeRows(rect *qt.QRect) (int, int) {
 		}
 		hidden := (-rect.Top() + rowHeight - 1) / rowHeight
 		first = row - hidden
+	} else if first < 0 {
+		// Inside the viewport but below the last row: the marquee is drawn in the
+		// blank area under the items, which selects nothing (Windows Explorer
+		// behaves the same).
+		return -1, -1
 	}
+
+	// RowAt answers -1 below the last row. That is either the bottom edge of an
+	// auto scrolling marquee (which reaches past the viewport) or a bottom edge
+	// that sits in the blank area under the items; in both cases the range runs
+	// from the covered top row down to the last one. A rectangle that starts in
+	// that blank area was rejected above.
 	last := self.RowAt(rect.Bottom())
-	// RowAt returns -1 above the first and below the last row.
-	if first < 0 {
-		first = 0
-	}
 	if last < 0 {
 		last = self.RowCount() - 1
+	}
+
+	if first < 0 {
+		first = 0
 	}
 	if first >= self.RowCount() {
 		first = self.RowCount() - 1

@@ -98,10 +98,10 @@ func newWindow() *Window {
 
 	w.initLayout()
 
-	w.addSubInterface(homeInterface, common.Home, "主页", navigation.NavigationItemPositionTop, common.HomeFill)
-	w.addSubInterface(appInterface, common.Application, "应用", navigation.NavigationItemPositionTop, nil)
+	w.addSubInterface(homeInterface, common.Home, "主页", navigation.NavigationItemPositionTop, common.Home)
+	w.addSubInterface(appInterface, common.AppIconDefault, "应用", navigation.NavigationItemPositionTop, nil)
 	w.addSubInterface(videoInterface, common.Video, "视频", navigation.NavigationItemPositionTop, nil)
-	w.addSubInterface(libraryInterface, common.Library, "库", navigation.NavigationItemPositionBottom, common.LibraryFill)
+	w.addSubInterface(libraryInterface, common.Library, "库", navigation.NavigationItemPositionBottom, common.Library)
 
 	w.navigationBar.AddItem("Help", common.Help, "帮助", func(bool) { w.showMessageBox() }, false, nil, navigation.NavigationItemPositionBottom)
 

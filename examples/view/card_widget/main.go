@@ -356,7 +356,7 @@ func newDemo3() *window.MSFluentWindow {
 
 	appInterface := newAppInterface(w.QWidget)
 
-	w.AddSubInterface(appInterface.QWidget, common.Library, "库", common.LibraryFill, navigation.NavigationItemPositionTop, true)
+	w.AddSubInterface(appInterface.QWidget, common.Library, "库", common.Library, navigation.NavigationItemPositionTop, true)
 
 	w.Resize(880, 760)
 	w.SetWindowTitle("PyQt-Fluent-Widgets")

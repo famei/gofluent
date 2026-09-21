@@ -179,6 +179,10 @@ func (i *MenuInterface) createCommandBar() *qt.QWidget {
 	bar.AddActions([]*qt.QAction{
 		gcommon.NewActionFluentIcon(gcommon.Add, tr("Add"), nil).QAction,
 		gcommon.NewActionFluentIcon(gcommon.Rotate, tr("Rotate"), nil).QAction,
+	})
+	// A pure icon button: only the icon is drawn, the text becomes its tool tip.
+	bar.AddIconAction(gcommon.NewActionFluentIcon(gcommon.Copy, tr("Copy"), nil).QAction)
+	bar.AddActions([]*qt.QAction{
 		gcommon.NewActionFluentIcon(gcommon.ZoomIn, tr("Zoom in"), nil).QAction,
 		gcommon.NewActionFluentIcon(gcommon.ZoomOut, tr("Zoom out"), nil).QAction,
 	})

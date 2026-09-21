@@ -253,6 +253,8 @@ menu.Exec(pos, widgets.MenuAnimationDropDown)`
 	codeCommandBar = `bar := widgets.NewCommandBar(parent)
 bar.SetToolButtonStyle(qt.ToolButtonTextBesideIcon)
 bar.AddAction(common.NewActionFluentIcon(common.Add, "Add", nil).QAction)
+// A pure icon button: only the icon is drawn, the text becomes its tool tip.
+bar.AddIconAction(common.NewActionFluentIcon(common.Copy, "Copy", nil).QAction)
 bar.AddSeparator()
 
 button := widgets.NewTransparentDropDownPushButtonIcon(common.Sort, "Sort", parent)

@@ -9,6 +9,11 @@ import (
 // and self-draws its icon and text (the native QToolButton text/icon painting is
 // left unused so the two do not paint on top of each other).
 //
+// A button is drawn as an icon-only button when it carries no text or when
+// SetIconOnly(true) forces it, whatever the tool button style of the bar is; the
+// text of its action stays available as the tool tip and in the more-actions
+// menu.
+//
 // Constructors
 //   - NewCommandButton(parent *qt.QWidget)
 type CommandButton struct {
@@ -18,6 +23,15 @@ type CommandButton struct {
 	_action   *qt.QAction
 	_isTight  bool
 	isPressed bool
+
+	// _iconOnly overrides the derived icon-only state once SetIconOnly was called.
+	_iconOnly    bool
+	_iconOnlySet bool
+
+	// _toolTip overrides the tool tip taken from the action once SetToolTip was
+	// called (an empty string suppresses the tool tip entirely).
+	_toolTip    string
+	_hasToolTip bool
 }
 
 // NewCommandButton builds a command button.
@@ -102,6 +116,32 @@ func (b *CommandButton) SetAction(action *qt.QAction) {
 	})
 }
 
+// SetToolTip overrides the tool tip of the button. An empty string suppresses the
+// tool tip entirely — an icon-only button otherwise falls back to the text of its
+// action, because QAction.toolTip() answers with the action text while no explicit
+// tool tip is set:
+//
+//	bar.AddIconAction(action).SetToolTip("")   // icon only, no hover text
+//
+// A non-empty tool tip is kept when the action changes.
+func (b *CommandButton) SetToolTip(tooltip string) {
+	b._toolTip = tooltip
+	b._hasToolTip = true
+	b.QToolButton.SetToolTip(tooltip)
+}
+
+// ToolTip returns the tool tip currently shown by the button.
+func (b *CommandButton) ToolTip() string { return b.QToolButton.ToolTip() }
+
+// applyToolTip takes the tool tip of the bound action unless the caller set one.
+func (b *CommandButton) applyToolTip(action *qt.QAction) {
+	if b._hasToolTip {
+		b.QToolButton.SetToolTip(b._toolTip)
+		return
+	}
+	b.QToolButton.SetToolTip(action.ToolTip())
+}
+
 // Action returns the bound action (nil when none).
 func (b *CommandButton) Action() *qt.QAction { return b._action }
 
@@ -119,25 +159,82 @@ func (b *CommandButton) onActionChanged() {
 		b.SetIcon(action.Icon())
 	}
 	b.SetText(action.Text())
-	b.SetToolTip(action.ToolTip())
+	b.applyToolTip(action)
 	b.SetEnabled(action.IsEnabled())
 	b.SetCheckable(action.IsCheckable())
 	b.SetChecked(action.IsChecked())
 }
 
+// SetIconOnly forces the button into the icon-only layout (nothing but the icon
+// is drawn) or restores the derived layout. A button whose action carries no text
+// is icon-only anyway; this is what makes a labeled action render as a pure icon
+// button — its text is still used as the tool tip and by the more-actions menu.
+func (b *CommandButton) SetIconOnly(iconOnly bool) {
+	b._iconOnly = iconOnly
+	b._iconOnlySet = true
+	b.applyPreferredSize()
+	b.Update()
+}
+
+// IsIconOnly reports whether the button draws its icon without text.
+func (b *CommandButton) IsIconOnly() bool { return b.isIconOnly() }
+
 func (b *CommandButton) isIconOnly() bool {
+	if b._iconOnlySet {
+		return b._iconOnly
+	}
 	if b._text == "" {
 		return true
 	}
 	style := b.ToolButtonStyle()
-	return style == qt.ToolButtonIconOnly || style == qt.ToolButtonFollowStyle
+	if style != qt.ToolButtonIconOnly && style != qt.ToolButtonFollowStyle {
+		return false
+	}
+	// The icon-only style still needs an icon to draw: an action without one (see
+	// common.NewActionText) would render as an empty button, so its text is drawn
+	// instead.
+	return b.hasIcon()
+}
+
+// hasIcon reports whether the button has an icon to draw.
+func (b *CommandButton) hasIcon() bool {
+	switch icon := b._icon.(type) {
+	case nil:
+		return false
+	case *qt.QIcon:
+		return icon != nil && !icon.IsNull()
+	case string:
+		return icon != ""
+	default:
+		return b._icon != nil
+	}
+}
+
+// effectiveStyle returns the layout the button paints and measures with: an
+// icon-only button ignores the tool button style of the bar, an icon-only style
+// falls back to the icon-beside-text layout once SetIconOnly(false) asks for the
+// text back, and a button without an icon is text only — the icon slot of the
+// beside/under layouts would stay empty and push the text off center.
+func (b *CommandButton) effectiveStyle() qt.ToolButtonStyle {
+	if b.isIconOnly() {
+		return qt.ToolButtonIconOnly
+	}
+	if !b.hasIcon() {
+		return qt.ToolButtonTextOnly
+	}
+	style := b.ToolButtonStyle()
+	if style == qt.ToolButtonIconOnly || style == qt.ToolButtonFollowStyle {
+		return qt.ToolButtonTextBesideIcon
+	}
+	return style
 }
 
 // SizeHint returns the computed preferred size.
 func (b *CommandButton) SizeHint() *qt.QSize { return b.calcSizeHint() }
 
 func (b *CommandButton) calcSizeHint() *qt.QSize {
-	if b.isIconOnly() {
+	switch b.effectiveStyle() {
+	case qt.ToolButtonIconOnly:
 		if b._isTight {
 			return qt.NewQSize2(36, 34)
 		}
@@ -147,7 +244,7 @@ func (b *CommandButton) calcSizeHint() *qt.QSize {
 	fm := b.FontMetrics() // GoGC-armed — do NOT Delete
 	tw := fm.Width(b._text)
 
-	switch b.ToolButtonStyle() {
+	switch b.effectiveStyle() {
 	case qt.ToolButtonTextBesideIcon:
 		return qt.NewQSize2(tw+47, 34)
 	case qt.ToolButtonTextOnly:
@@ -209,13 +306,16 @@ func (b *CommandButton) installEvents() {
 			painter.SetOpacity(0.63)
 		}
 
-		style := b.ToolButtonStyle()
+		style := b.effectiveStyle()
 		isz := b.IconSize()
 		iw := isz.Width()
 		ih := isz.Height()
 
+		// An icon-only button centers its icon whatever the tool button style of
+		// the bar is: the text layouts below would leave the icon in the corner
+		// reserved for a label that is never drawn.
 		switch style {
-		case qt.ToolButtonIconOnly, qt.ToolButtonFollowStyle:
+		case qt.ToolButtonIconOnly:
 			rect := qt.NewQRectF4(float64((b.Width()-iw))/2, float64((b.Height()-ih))/2, float64(iw), float64(ih))
 			defer rect.Delete()
 			renderFluentIcon(b._icon, painter, rect, b.iconTheme())
@@ -417,6 +517,19 @@ func (w *CommandBar) AddAction(action *qt.QAction) *CommandButton {
 	return button
 }
 
+// AddIconAction adds an action as a pure icon button: only the icon is drawn, no
+// text. The action text is kept as the button's tool tip and is still shown by the
+// more-actions menu, so an icon-only button stays reachable and labelled:
+//
+//	bar.AddIconAction(common.NewActionFluentIcon(common.Settings, "设置", nil).QAction)
+func (w *CommandBar) AddIconAction(action *qt.QAction) *CommandButton {
+	button := w.AddAction(action)
+	if button != nil {
+		button.SetIconOnly(true)
+	}
+	return button
+}
+
 // AddActions adds multiple actions.
 func (w *CommandBar) AddActions(actions []*qt.QAction) {
 	for _, a := range actions {
@@ -459,6 +572,24 @@ func (w *CommandBar) InsertAction(before, action *qt.QAction) *CommandButton {
 	return button
 }
 
+// AddStretch appends a flexible spacer. It takes the space that is left after the
+// visible items are placed, so every action added afterwards is pushed to the right
+// edge of the bar (the QBoxLayout.AddStretch behaviour):
+//
+//	bar.AddAction(openAction)    // left aligned
+//	bar.AddStretch()
+//	bar.AddAction(themeAction)   // right aligned
+//
+// Several stretches share the leftover space equally.
+func (w *CommandBar) AddStretch() {
+	w.insertWidgetToLayout(-1, commandBarStretch{})
+}
+
+// InsertStretch inserts a flexible spacer at index.
+func (w *CommandBar) InsertStretch(index int) {
+	w.insertWidgetToLayout(index, commandBarStretch{})
+}
+
 // AddSeparator adds a separator to the end of the bar.
 func (w *CommandBar) AddSeparator() {
 	w.InsertSeparator(-1)
@@ -492,6 +623,9 @@ func (w *CommandBar) RemoveAction(action *qt.QAction) {
 
 // RemoveWidget removes a widget from the bar.
 func (w *CommandBar) RemoveWidget(widget *qt.QWidget) {
+	if widget == nil {
+		return
+	}
 	for i, it := range w._widgets {
 		if commandBarWidget(it) == widget {
 			w._widgets = append(w._widgets[:i], w._widgets[i+1:]...)
@@ -607,20 +741,57 @@ func (w *CommandBar) UpdateGeometry() {
 
 	h := w.Height()
 
+	// The flexible spacers take an equal share of the space that is left once
+	// every visible item and the more-actions button are placed, which is what
+	// pushes the items behind a stretch to the right edge of the bar.
+	fixed, items, stretches := 0, 0, 0
+	for _, it := range visibles {
+		if qw := commandBarWidget(it); qw != nil {
+			fixed += qw.Width()
+			items++
+		} else {
+			stretches++
+		}
+	}
+	spacing := 0
+	if items+stretches > 1 {
+		spacing = w.spacing * (items + stretches - 1)
+	}
+	showMore := len(w._hiddenActions) > 0 || len(visibles) < len(w._widgets)
+	reserved := 0
+	if showMore {
+		reserved = w.moreButton.Width() + w.spacing
+	}
+	share := 0
+	if stretches > 0 {
+		share = (w.Width() - m.Left() - m.Right() - fixed - spacing - reserved) / stretches
+		if share < 0 {
+			share = 0
+		}
+	}
+
 	for _, it := range visibles {
 		qw := commandBarWidget(it)
+		if qw == nil {
+			x += share + w.spacing
+			continue
+		}
 		qw.Show()
 		qw.Move(x, (h-qw.Height())/2)
 		x += qw.Width() + w.spacing
 	}
 
-	if len(w._hiddenActions) > 0 || len(visibles) < len(w._widgets) {
+	if showMore {
 		w.moreButton.Show()
 		w.moreButton.Move(x, (h-w.moreButton.Height())/2)
 	}
 
 	for _, it := range w._widgets[len(visibles):] {
-		commandBarWidget(it).Hide()
+		qw := commandBarWidget(it)
+		if qw == nil {
+			continue
+		}
+		qw.Hide()
 		w._hiddenWidgets = append(w._hiddenWidgets, it)
 	}
 }
@@ -632,7 +803,9 @@ func (w *CommandBar) visibleWidgets() []interface{} {
 
 	width := w.moreButton.Width()
 	for i, it := range w._widgets {
-		width += commandBarWidget(it).Width()
+		if qw := commandBarWidget(it); qw != nil {
+			width += qw.Width()
+		}
 		if i > 0 {
 			width += w.spacing
 		}
@@ -644,10 +817,12 @@ func (w *CommandBar) visibleWidgets() []interface{} {
 }
 
 func (w *CommandBar) suitableWidth() int {
-	total := 0
-	n := len(w._widgets)
+	total, n := 0, 0
 	for _, it := range w._widgets {
-		total += commandBarWidget(it).Width()
+		if qw := commandBarWidget(it); qw != nil {
+			total += qw.Width()
+			n++
+		}
 	}
 	if len(w._hiddenActions) > 0 {
 		total += w.moreButton.Width()
@@ -674,9 +849,11 @@ func (w *CommandBar) createButton(action *qt.QAction) *CommandButton {
 }
 
 func (w *CommandBar) insertWidgetToLayout(index int, widget interface{}) {
-	qw := commandBarWidget(widget)
-	qw.SetParent(w.QWidget)
-	qw.Show()
+	// A stretch has no widget of its own; it only takes part in the layout pass.
+	if qw := commandBarWidget(widget); qw != nil {
+		qw.SetParent(w.QWidget)
+		qw.Show()
+	}
 
 	if index < 0 || index > len(w._widgets) {
 		w._widgets = append(w._widgets, widget)
@@ -688,8 +865,10 @@ func (w *CommandBar) insertWidgetToLayout(index int, widget interface{}) {
 
 	maxH := 0
 	for _, it := range w._widgets {
-		if h := commandBarWidget(it).Height(); h > maxH {
-			maxH = h
+		if qw := commandBarWidget(it); qw != nil {
+			if h := qw.Height(); h > maxH {
+				maxH = h
+			}
 		}
 	}
 	w.SetFixedHeight(maxH)
@@ -734,6 +913,11 @@ func containsAction(actions []*qt.QAction, action *qt.QAction) bool {
 	return false
 }
 
+// commandBarStretch is the flexible spacer of a command bar (see AddStretch). It
+// owns no widget: the layout gives it the space that is left over once every
+// visible item has been placed.
+type commandBarStretch struct{}
+
 func commandBarWidget(w interface{}) *qt.QWidget {
 	switch v := w.(type) {
 	case *CommandButton:
@@ -743,6 +927,7 @@ func commandBarWidget(w interface{}) *qt.QWidget {
 	case *qt.QWidget:
 		return v
 	default:
+		// A commandBarStretch is a placeholder without a widget.
 		return nil
 	}
 }

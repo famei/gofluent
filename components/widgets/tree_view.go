@@ -212,6 +212,18 @@ func treeBranchLevel(index *qt.QModelIndex) int {
 	return level
 }
 
+// treeBranchSVG returns the SVG of the expander chevron of a branch: the open or
+// the closed image of the active theme (the QSS `url(:/qfluentwidgets/...)`
+// branch images cannot be resolved through the Go embed.FS resource system, so
+// they are drawn by hand).
+func treeBranchSVG(view *qt.QTreeView, index *qt.QModelIndex) []byte {
+	name := "tree_view/TreeViewOpen"
+	if !view.IsExpanded(index) {
+		name = "tree_view/TreeViewClose"
+	}
+	return readEmbeddedImage(name + "_" + common.GetIconColor(common.ThemeAuto, false) + ".svg")
+}
+
 // drawTreeBranchIndicator draws the Fluent chevron for a branch that has
 // children. The QSS `url(:/qfluentwidgets/...)` branch images cannot be resolved
 // through the Go embed.FS resource system, so the TreeViewOpen/TreeViewClose
@@ -222,11 +234,7 @@ func drawTreeBranchIndicator(view *qt.QTreeView, painter *qt.QPainter, rect *qt.
 		return
 	}
 
-	name := "tree_view/TreeViewOpen"
-	if !view.IsExpanded(index) {
-		name = "tree_view/TreeViewClose"
-	}
-	svgBytes := readEmbeddedImage(name + "_" + common.GetIconColor(common.ThemeAuto, false) + ".svg")
+	svgBytes := treeBranchSVG(view, index)
 	if len(svgBytes) == 0 {
 		return
 	}
