@@ -353,7 +353,6 @@ type FileTable struct {
 	// actually receives the mouse events, so an event filter is the reliable
 	// hook.
 	viewportFilter *qt.QObject
-	themeAlive     *widgetAlive
 
 	rubberBand        *qt.QRubberBand
 	rubberBandPen     *qt.QPen
@@ -644,13 +643,10 @@ func (self *FileTable) Init_Gui(parent *qt.QWidget) {
 }
 
 // initTheme repaints the rows when the application theme changes; the
-// stylesheet itself is refreshed by the stylesheet manager.
+// stylesheet itself is refreshed by the stylesheet manager. The listener is tied
+// to the table, so the registry drops it when the table is destroyed.
 func (self *FileTable) initTheme() {
-	self.themeAlive = trackWidget(self.OnDestroyed)
-	common.QConfigInstance.OnThemeChanged(func(common.Theme) {
-		if !self.themeAlive.ok() {
-			return
-		}
+	common.QConfigInstance.OnThemeChangedFor(self.QObject, func(common.Theme) {
 		self.applyRubberBandStyle()
 		if vp := self.Viewport(); vp != nil {
 			vp.Update()

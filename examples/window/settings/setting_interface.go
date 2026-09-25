@@ -114,17 +114,17 @@ func (s *SettingInterface) buildGroups() {
 	s.deskLyricHighlightColorCard = settings.NewColorSettingCard(
 		cfg.DeskLyricHighlightColor, common.Color, "Foreground color", "", s.deskLyricGroup.QWidget, false)
 	s.deskLyricStrokeColorCard = settings.NewColorSettingCard(
-		cfg.DeskLyricStrokeColor, common.PencilInk, "Stroke color", "", s.deskLyricGroup.QWidget, false)
+		cfg.DeskLyricStrokeColor, common.Color, "Stroke color", "", s.deskLyricGroup.QWidget, false)
 	s.deskLyricStrokeSizeCard = settings.NewRangeSettingCard(
 		cfg.DeskLyricStrokeSize, common.Highlight, "Stroke size", "", s.deskLyricGroup.QWidget)
 	s.deskLyricAlignmentCard = settings.NewOptionsSettingCard(
-		cfg.DeskLyricAlignment, common.Alignment, "Alignment", "",
+		cfg.DeskLyricAlignment, common.Comment, "Alignment", "",
 		[]string{"Center aligned", "Left aligned", "Right aligned"}, s.deskLyricGroup.QWidget)
 
 	// main panel
 	s.mainPanelGroup = settings.NewSettingCardGroup("Main Panel", s.scrollWidget)
 	s.minimizeToTrayCard = settings.NewSwitchSettingCard(
-		common.Minimize, "Minimize to tray after closing",
+		common.ChromeMinimize, "Minimize to tray after closing",
 		"PyQt-Fluent-Widgets will continue to run in the background",
 		cfg.MinimizeToTray, s.mainPanelGroup.QWidget)
 

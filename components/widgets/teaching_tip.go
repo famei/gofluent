@@ -2,6 +2,7 @@ package widgets
 
 import (
 	"github.com/famei/gofluent/common"
+	"github.com/famei/gofluent/internal/platform"
 	qt "github.com/mappu/miqt/qt"
 )
 
@@ -377,9 +378,7 @@ type TeachingTip struct {
 	hBoxLayout      *qt.QHBoxLayout
 	bubble          *TeachTipBubble
 	shadowEffect    *qt.QGraphicsDropShadowEffect
-	opacityAni      *qt.QPropertyAnimation
 	fadeOutTimer    *qt.QTimer
-	fadingOut       bool
 	onClosed        func()
 }
 
@@ -399,14 +398,10 @@ func NewTeachingTip(view *FlyoutViewBase, target *qt.QWidget, duration int, tail
 	w.SetShadowEffect(35, 0, 8)
 
 	w.SetAttribute(qt.WA_TranslucentBackground)
-	w.SetWindowFlags(qt.Tool | qt.FramelessWindowHint)
-
-	w.opacityAni = qt.NewQPropertyAnimation2(w.QObject, []byte("windowOpacity"))
-	w.opacityAni.OnFinished(func() {
-		if w.fadingOut {
-			w.Close()
-		}
-	})
+	// A tip must never take the focus from the window it explains (the Qt::Tool window it
+	// replaces on X11 does not either).
+	w.SetAttribute(qt.WA_ShowWithoutActivating)
+	w.SetWindowFlags(platform.FloatingWindowFlags())
 
 	w.fadeOutTimer = qt.NewQTimer2(w.QObject)
 	w.fadeOutTimer.SetSingleShot(true)
@@ -440,30 +435,32 @@ func (w *TeachingTip) SetView(view *FlyoutViewBase) { w.bubble.SetView(view) }
 // OnClosed registers a callback emitted when the tip closes.
 func (w *TeachingTip) OnClosed(f func()) { w.onClosed = f }
 
-// fadeIn animates the window opacity from 0 to 1 over 167ms.
-func (w *TeachingTip) fadeIn() {
-	w.fadingOut = false
-	w.opacityAni.SetDuration(167)
-	start := qt.NewQVariant12(0.0)
-	w.opacityAni.SetStartValue(start)
-	start.Delete()
-	end := qt.NewQVariant12(1.0)
-	w.opacityAni.SetEndValue(end)
-	end.Delete()
-	w.opacityAni.Start()
+// adjustPosition moves the tip so that its content sits where the target widget asks for (see
+// common.MoveWindowContentTo: move() would place the window frame there instead, which a
+// window manager that decorates the window turns into an offset).
+func (w *TeachingTip) adjustPosition() {
+	pos := w.manager.position(w)
+	common.MoveWindowContentTo(w.QWidget, pos.X(), pos.Y())
+	pos.Delete()
 }
 
-// fadeOut animates the window opacity from 1 to 0 over 167ms, then closes.
+// fadeIn fades the bubble in over 167ms.
+//
+// The animation is a graphics effect on the bubble, not the window opacity the Python
+// original animates: windowOpacity only works where the compositor honours
+// _NET_WM_WINDOW_OPACITY (WSLg's Weston does not, so the tip appeared out of nowhere), and
+// a graphics effect on a top level window is never repainted on X11.
+func (w *TeachingTip) fadeIn() {
+	// The bubble carries the drop shadow as its graphics effect and Qt gives a widget only
+	// one effect, so the shadow is installed again when the fade ends.
+	common.FadeInThen(w.bubble.QWidget, 167, qt.NewQEasingCurve3(qt.QEasingCurve__InSine),
+		func() { w.SetShadowEffect(35, 0, 8) })
+}
+
+// fadeOut fades the bubble out over 167ms and then closes the tip.
 func (w *TeachingTip) fadeOut() {
-	w.fadingOut = true
-	w.opacityAni.SetDuration(167)
-	start := qt.NewQVariant12(1.0)
-	w.opacityAni.SetStartValue(start)
-	start.Delete()
-	end := qt.NewQVariant12(0.0)
-	w.opacityAni.SetEndValue(end)
-	end.Delete()
-	w.opacityAni.Start()
+	common.FadeOutThen(w.bubble.QWidget, 167, qt.NewQEasingCurve3(qt.QEasingCurve__InSine),
+		func() { w.Close() })
 }
 
 func (w *TeachingTip) installEvents() {
@@ -472,10 +469,12 @@ func (w *TeachingTip) installEvents() {
 		if w.duration >= 0 {
 			w.fadeOutTimer.Start(w.duration)
 		}
-		pos := w.manager.position(w)
-		w.MoveWithQPoint(pos)
-		pos.Delete()
+		w.adjustPosition()
 		w.AdjustSize()
+		// Place it again once the window is mapped: a position set before the map can be
+		// overridden by the window manager (see common.ApplyAfterMap), which would leave
+		// the tip next to - but not on - its target.
+		common.ApplyAfterMap(w.QWidget, w.adjustPosition)
 		w.fadeIn()
 	})
 	w.OnCloseEvent(func(super func(event *qt.QCloseEvent), event *qt.QCloseEvent) {

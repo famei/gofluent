@@ -21,14 +21,15 @@ QTreeView::item {
 }
 
 
+/* The branch chevron is not a QSS image here: the Go port has no Qt resource
+   bundle, so TreeViewWidget/TreeView paint the open/close SVG themselves (see
+   drawTreeBranchIndicator). */
 QTreeView::branch:has-children:!has-siblings:closed,
 QTreeView::branch:closed:has-children:has-siblings {
-    image: url(:/qfluentwidgets/images/tree_view/TreeViewClose_white.svg);
 }
 
 QTreeView::branch:open:has-children:!has-siblings,
 QTreeView::branch:open:has-children:has-siblings {
-    image: url(:/qfluentwidgets/images/tree_view/TreeViewOpen_white.svg);
 }
 
 QTreeView:disabled {
@@ -77,18 +78,18 @@ QHeaderView::section:checked {
     background-color: transparent;
 }
 
+/* The sort indicator image of the Python resource bundle is not available here
+   (no Qt resource system); only the placement is kept. */
 QHeaderView::down-arrow {
     subcontrol-origin: padding;
     subcontrol-position: center right;
     margin-right: 6px;
-    image: url(:/qfluentwidgets/images/table_view/Down_white.svg);
 }
 
 QHeaderView::up-arrow {
     subcontrol-origin: padding;
     subcontrol-position: center right;
     margin-right: 6px;
-    image: url(:/qfluentwidgets/images/table_view/Up_white.svg);
 }
 
 QTableCornerButton::section {

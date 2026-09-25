@@ -6,7 +6,7 @@ import (
 	"github.com/famei/gofluent/common"
 	"github.com/famei/gofluent/components/navigation"
 	"github.com/famei/gofluent/components/widgets"
-	"github.com/famei/gofluent/internal/win32"
+	"github.com/famei/gofluent/internal/platform"
 	qt "github.com/mappu/miqt/qt"
 )
 
@@ -273,7 +273,6 @@ type FluentTitleBar struct {
 	// Title icon source and the state of its theme hook (see title_icon.go).
 	iconSource common.FluentIconBase
 	iconHooked bool
-	iconGone   bool
 }
 
 // NewFluentTitleBar builds a Fluent title bar.
@@ -381,7 +380,6 @@ type SplitTitleBar struct {
 	// Title icon source and the state of its theme hook (see title_icon.go).
 	iconSource common.FluentIconBase
 	iconHooked bool
-	iconGone   bool
 }
 
 // NewSplitTitleBar builds a split title bar.
@@ -450,19 +448,12 @@ func NewFluentWidget(parent *qt.QWidget) *FluentWidget {
 	w.SetMicaEffectEnabled(true)
 	w.SetTitleBar(NewFluentWidgetTitleBar(w.QWidget).QWidget)
 
-	// The theme listener is a Go closure, not a Qt signal-slot connection, so Qt
-	// does not disconnect it when the window is destroyed: closing the window,
-	// deleting it with DeleteLater() and switching the theme afterwards would call
-	// updateBackgroundColor -> Update() on the freed widget and crash. Track
-	// destruction and no-op the listener once the window is gone.
-	destroyed := false
-	w.OnDestroyed(func() { destroyed = true })
-	common.QConfigInstance.OnThemeChangedFinished(func() {
-		if destroyed {
-			return
-		}
-		w.onThemeChangedFinished()
-	})
+	// The theme listener is tied to the window: the registry drops it when the
+	// window is destroyed, so closing it, deleting it with DeleteLater() and
+	// switching the theme afterwards cannot call updateBackgroundColor ->
+	// Update() on the freed widget (a Go closure is not a Qt slot and would not
+	// be disconnected).
+	common.QConfigInstance.OnThemeChangedFinishedFor(w.QObject, w.onThemeChangedFinished)
 	w.OnDestroyed(func() {
 		if w.bgAni != nil {
 			w.bgAni.Delete()
@@ -503,12 +494,14 @@ func (w *FluentWidget) SetCustomBackgroundColor(light, dark *qt.QColor) {
 	w.updateBackgroundColor()
 }
 
-// SetMicaEffectEnabled toggles the Mica effect. On Windows 11 the DWM Mica
-// backdrop is applied (degrading to legacy Mica / Windows 10 acrylic on older
-// builds); the window background becomes transparent while enabled so the
-// backdrop shows through. On non-Windows platforms it is a no-op.
+// SetMicaEffectEnabled toggles the Mica effect. It is a Windows 11 feature only: on
+// Windows 10 (and every other platform) the window keeps its solid theme background,
+// exactly like the upstream FluentWidget, whose setMicaEffectEnabled returns early
+// there. Asking for the backdrop anyway would send the window down the Windows 10
+// acrylic fallback, which re-composites an opaque frameless window and makes it lose its
+// shadow (and leaves repaint artefacts) instead of adding a backdrop.
 func (w *FluentWidget) SetMicaEffectEnabled(isEnabled bool) {
-	if runtime.GOOS != "windows" {
+	if runtime.GOOS != "windows" || !platform.IsWindows11() {
 		w.isMicaEnabled = false
 		w.updateBackgroundColor()
 		return
@@ -518,13 +511,31 @@ func (w *FluentWidget) SetMicaEffectEnabled(isEnabled bool) {
 	if isEnabled {
 		w.applyBackdrop()
 	} else {
-		win32.RemoveBackdrop(win32.HWND(w.WinId()))
+		platform.RemoveBackdrop(platform.HWND(w.WinId()))
 	}
 	w.updateBackgroundColor()
 }
 
 // IsMicaEffectEnabled reports whether the Mica backdrop is enabled.
 func (w *FluentWidget) IsMicaEffectEnabled() bool { return w.isMicaEnabled }
+
+// WindowsBuild returns the Windows build number (0 on other platforms).
+func WindowsBuild() uint32 { return platform.WindowsBuild() }
+
+// IsWindows11 reports whether the Windows 11 DWM features are in use (the Mica backdrop
+// and the DWM rounded-corner preference). It is false on every older Windows — and on a
+// newer one once SetForceWindows10(true) asked for the Windows 10 behaviour.
+func IsWindows11() bool { return platform.IsWindows11() }
+
+// SetForceWindows10 forces the Windows 10 code paths — no Mica backdrop, and rounded
+// corners cut with a window region instead of the DWM corner preference — on a newer
+// Windows. It exists so the Windows 10 behaviour can be tested on a Windows 11 machine
+// (the test example examples/window/rounded_corner switches it at runtime); the
+// GOFLUENT_FORCE_WIN10 environment variable sets the same flag before startup.
+//
+// The windows that are already open keep the corners they applied: call
+// FluentWidget.RefreshRoundedCorners (or SetMicaEffectEnabled) afterwards.
+func SetForceWindows10(force bool) { platform.SetForceWindows10(force) }
 
 // BackgroundColor returns the current background color.
 func (w *FluentWidget) BackgroundColor() *qt.QColor { return w.backgroundColor }
@@ -573,17 +584,23 @@ func (w *FluentWidget) updateBackgroundColor() {
 	target.Delete()
 }
 
-// applyBackdrop re-applies the DWM backdrop for the current theme.
+// applyBackdrop re-applies the DWM backdrop for the current theme. Only Windows 11
+// has the Mica backdrop; on Windows 10 platform.EnableMica reports that it applied
+// nothing and the window keeps its solid background.
 func (w *FluentWidget) applyBackdrop() {
-	if runtime.GOOS != "windows" {
+	if runtime.GOOS != "windows" || !platform.IsWindows11() {
 		return
 	}
-	win32.EnableMica(win32.HWND(w.WinId()), common.IsDarkTheme())
+	if !platform.EnableMica(platform.HWND(w.WinId()), common.IsDarkTheme()) {
+		// No backdrop available after all: fall back to the solid background.
+		w.isMicaEnabled = false
+		w.updateBackgroundColor()
+	}
 }
 
 func (w *FluentWidget) onThemeChangedFinished() {
 	// Re-apply the Mica backdrop with the new theme and refresh the background
-	// color (transparent while Mica is enabled).
+	// color (solid, or transparent while Mica is enabled).
 	w.updateBackgroundColor()
 	if w.isMicaEnabled {
 		w.applyBackdrop()

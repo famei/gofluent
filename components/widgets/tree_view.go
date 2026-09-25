@@ -213,9 +213,8 @@ func treeBranchLevel(index *qt.QModelIndex) int {
 }
 
 // treeBranchSVG returns the SVG of the expander chevron of a branch: the open or
-// the closed image of the active theme (the QSS `url(:/qfluentwidgets/...)`
-// branch images cannot be resolved through the Go embed.FS resource system, so
-// they are drawn by hand).
+// the closed image of the active theme (the QSS branch images of the Python
+// resource bundle are not available here, so they are drawn by hand).
 func treeBranchSVG(view *qt.QTreeView, index *qt.QModelIndex) []byte {
 	name := "tree_view/TreeViewOpen"
 	if !view.IsExpanded(index) {
@@ -225,9 +224,9 @@ func treeBranchSVG(view *qt.QTreeView, index *qt.QModelIndex) []byte {
 }
 
 // drawTreeBranchIndicator draws the Fluent chevron for a branch that has
-// children. The QSS `url(:/qfluentwidgets/...)` branch images cannot be resolved
-// through the Go embed.FS resource system, so the TreeViewOpen/TreeViewClose
-// SVGs are drawn here directly (the Go port of the QSS branch indicator).
+// children. The QSS branch images of the Python resource bundle are not available
+// here, so the TreeViewOpen/TreeViewClose SVGs are drawn directly (the Go port of
+// the QSS branch indicator).
 func drawTreeBranchIndicator(view *qt.QTreeView, painter *qt.QPainter, rect *qt.QRect, index *qt.QModelIndex) {
 	model := index.Model()
 	if model == nil || model.RowCount(index) <= 0 {
@@ -281,7 +280,8 @@ func handleTreeBranchClick(view *qt.QTreeView, event *qt.QEvent) {
 // TreeWidget is a fluent styled tree widget.
 type TreeWidget struct {
 	*qt.QTreeWidget
-	delegate *TreeItemDelegate
+	delegate       *TreeItemDelegate
+	scrollDelegate *SmoothScrollDelegate
 }
 
 // NewTreeWidget builds a tree widget.
@@ -289,6 +289,8 @@ func NewTreeWidget(parent *qt.QWidget) *TreeWidget {
 	w := &TreeWidget{QTreeWidget: qt.NewQTreeWidget(parent)}
 	w.delegate = NewTreeItemDelegate(w.QAbstractItemView)
 	setupTreeView(w.QTreeView, w.delegate)
+	// Fluent overlay scroll bars instead of the native ones.
+	w.scrollDelegate = NewSmoothScrollDelegate(w.QAbstractScrollArea, false)
 	// OnDrawBranches / OnViewportEvent are overridden on the directly
 	// constructed QTreeWidget (not the embedded QTreeView base) to avoid the
 	// miqt "directly constructed" panic.
@@ -325,7 +327,8 @@ func (w *TreeWidget) SetCheckedColor(light, dark *qt.QColor) {
 // TreeView is a fluent styled tree view.
 type TreeView struct {
 	*qt.QTreeView
-	delegate *TreeItemDelegate
+	delegate       *TreeItemDelegate
+	scrollDelegate *SmoothScrollDelegate
 }
 
 // NewTreeView builds a tree view.
@@ -333,6 +336,8 @@ func NewTreeView(parent *qt.QWidget) *TreeView {
 	w := &TreeView{QTreeView: qt.NewQTreeView(parent)}
 	w.delegate = NewTreeItemDelegate(w.QAbstractItemView)
 	setupTreeView(w.QTreeView, w.delegate)
+	// Fluent overlay scroll bars instead of the native ones.
+	w.scrollDelegate = NewSmoothScrollDelegate(w.QAbstractScrollArea, false)
 	w.QTreeView.OnDrawBranches(func(super func(painter *qt.QPainter, rect *qt.QRect, index *qt.QModelIndex), painter *qt.QPainter, rect *qt.QRect, index *qt.QModelIndex) {
 		super(painter, rect, index)
 		drawTreeBranchIndicator(w.QTreeView, painter, rect, index)

@@ -676,10 +676,64 @@ func (m *RoundMenu) AddMenu(menu *RoundMenu) {
 	m.subMenus = append(m.subMenus, menu)
 	item := m.createSubMenuItem(menu)
 	m.view.AddItemWithItem(item)
-	m.itemData[item.UnsafePointer()] = &menuItemData{kind: menuItemSubMenu, submenu: menu}
+
+	// The QMenu of the sub-menu owns its menu action: it carries the title, the
+	// icon and the enabled state of the sub-menu entry. The custom list item has to
+	// follow it, otherwise menu.MenuAction().SetEnabled(false) (or SetText/SetIcon)
+	// would have no effect on the row that opens the sub-menu.
+	action := menu.MenuAction()
+	m.itemData[item.UnsafePointer()] = &menuItemData{kind: menuItemSubMenu, submenu: menu, action: action}
 	menu.isSubMenu = true
 	menu.parentMenu = m
 	menu.menuItem = item
+	action.OnChanged(func() {
+		// The parent menu can be destroyed before the sub-menu (and its action).
+		if m.alive.ok() {
+			m.refreshSubMenuItem(menu)
+		}
+	})
+
+	m.refreshSubMenuItem(menu)
+	m.AdjustSize()
+}
+
+// refreshSubMenuItem re-syncs the item of a sub-menu with the menu action of that
+// sub-menu: its text, its icon and whether the entry can be used at all. It runs
+// when the sub-menu is added and on every action change.
+func (m *RoundMenu) refreshSubMenuItem(menu *RoundMenu) {
+	item := menu.menuItem
+	if item == nil {
+		return
+	}
+	action := menu.MenuAction()
+
+	title := action.Text()
+	if title == "" {
+		title = menu.title
+	}
+	menu.title = title
+	item.SetText(m.subMenuText(title))
+
+	icon := menu.icon
+	if actionIcon := action.Icon(); actionIcon != nil && !actionIcon.IsNull() {
+		// The action owns the icon; menu.icon only points at it (the menu never
+		// deletes it), so hasItemIcon() and the row icon stay in sync.
+		menu.icon = actionIcon
+		icon = actionIcon
+	}
+	item.SetIcon(m.createItemIconForAction(icon))
+	item.SetSizeHint(qt.NewQSize2(m.subMenuItemWidth(title), m.itemHeight))
+	item.SetTextAlignment(int(qt.AlignLeft) | int(qt.AlignVCenter))
+
+	if action.IsEnabled() {
+		item.SetFlags(qt.ItemIsSelectable | qt.ItemIsEnabled)
+	} else {
+		// A disabled sub-menu entry is not selectable and does not react to the
+		// mouse, exactly like a disabled action item.
+		item.SetFlags(qt.NoItemFlags)
+	}
+
+	m.resizeSubMenuItems()
 	m.AdjustSize()
 }
 
@@ -931,13 +985,19 @@ func (m *RoundMenu) onActionChanged(action *qt.QAction) {
 }
 
 func (m *RoundMenu) createSubMenuItem(menu *RoundMenu) *qt.QListWidgetItem {
-	item := qt.NewQListWidgetItem3(m.createItemIconForAction(menu.icon), menu.title)
-	if m.hasItemIcon() {
-		item.SetText(" " + item.Text())
-	}
+	item := qt.NewQListWidgetItem3(m.createItemIconForAction(menu.icon), m.subMenuText(menu.title))
 	item.SetSizeHint(qt.NewQSize2(m.subMenuItemWidth(menu.title), m.itemHeight))
 	item.SetTextAlignment(int(qt.AlignLeft) | int(qt.AlignVCenter))
 	return item
+}
+
+// subMenuText returns the text of a sub-menu item: an item icon in the menu adds
+// the same leading space the action items get, so the titles stay aligned.
+func (m *RoundMenu) subMenuText(title string) string {
+	if m.hasItemIcon() {
+		return " " + title
+	}
+	return title
 }
 
 // subMenuItemWidth computes the sub-menu item width, accounting for the longest
@@ -1123,6 +1183,11 @@ func (m *RoundMenu) onItemEntered(item *qt.QListWidgetItem) {
 }
 
 func (m *RoundMenu) showSubMenu(item *qt.QListWidgetItem) {
+	// A sub-menu whose menu action is disabled stays closed (its item is already
+	// flagged as not enabled, this covers a state change while hovering).
+	if info := m.itemData[item.UnsafePointer()]; info != nil && info.action != nil && !info.action.IsEnabled() {
+		return
+	}
 	m.lastHoverSubMenuItem = item
 	m.timer.Stop()
 	m.timer.Start(400)
@@ -1134,6 +1199,9 @@ func (m *RoundMenu) onShowMenuTimeOut() {
 	}
 	info := m.itemData[m.lastHoverSubMenuItem.UnsafePointer()]
 	if info == nil || info.submenu == nil {
+		return
+	}
+	if info.action != nil && !info.action.IsEnabled() {
 		return
 	}
 	sub := info.submenu

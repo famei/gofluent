@@ -1,4 +1,6 @@
 *.exe
 .*
 build_all_examples.log
+app
+config
 !.gitignore

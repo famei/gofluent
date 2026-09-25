@@ -160,6 +160,12 @@ func newSliderBase(orientation qt.Orientation, parent *qt.QWidget) *Slider {
 		}
 	})
 	w.OnMouseMoveEvent(func(super func(e *qt.QMouseEvent), e *qt.QMouseEvent) {
+		// Only follow the mouse while a button is held: the frameless window's
+		// mouse-move resize route enables mouse tracking deep in the widget tree, so
+		// plain hover moves reach this handler too and must not move the handle.
+		if e.Buttons() == qt.NoButton {
+			return
+		}
 		w.SetValue(w.posToValue(e.Pos()))
 	})
 	w.OnResizeEvent(func(super func(e *qt.QResizeEvent), e *qt.QResizeEvent) {

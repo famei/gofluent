@@ -56,17 +56,10 @@ func newFluentLabelBase(parent *qt.QWidget, fontSize, weight int) *FluentLabelBa
 	w.lightColor = qt.NewQColor3(0, 0, 0)
 	w.darkColor = qt.NewQColor3(255, 255, 255)
 	w.SetTextColor(w.lightColor, w.darkColor)
-	// The theme-change callback is a Go closure, not a Qt signal-slot
-	// connection, so Qt does not auto-disconnect it when the label is
-	// destroyed. Track destruction and no-op the callback afterwards, otherwise
-	// a theme switch (e.g. to dark mode) after the label's C++ object is freed
-	// calls into dangling memory and crashes.
-	destroyed := false
-	w.OnDestroyed(func() { destroyed = true })
-	common.QConfigInstance.OnThemeChanged(func(common.Theme) {
-		if destroyed {
-			return
-		}
+	// The theme listener is tied to the label: the registry drops it when the
+	// label is destroyed, so a theme switch can never call into freed widget
+	// memory (a Go closure is not a Qt slot and would not be disconnected).
+	common.QConfigInstance.OnThemeChangedFor(w.QObject, func(common.Theme) {
 		w.SetTextColor(w.lightColor, w.darkColor)
 	})
 	w.OnContextMenuEvent(func(super func(event *qt.QContextMenuEvent), event *qt.QContextMenuEvent) {

@@ -38,7 +38,7 @@ func newWindow() *Window {
 
 func (w *Window) initNavigation() {
 	w.AddSubInterface(w.focusInterface.QWidget, common.Ringer, "专注时段", navigation.NavigationItemPositionTop, nil, false)
-	w.AddSubInterface(w.stopWatchInterface.QWidget, common.StopWatch, "秒表", navigation.NavigationItemPositionTop, nil, false)
+	w.AddSubInterface(w.stopWatchInterface.QWidget, common.DateTime, "秒表", navigation.NavigationItemPositionTop, nil, false)
 
 	avatar := navigation.NewNavigationAvatarWidget("zhiyiYo", resource.Shoko(), nil)
 	w.NavigationInterface().AddWidget(

@@ -149,8 +149,8 @@ func (w *Window) addSubInterface(iface *qt.QWidget, icon interface{}, text strin
 
 func (w *Window) initWindow() {
 	w.Resize(900, 700)
-	// NOTE: the Python uses the Qt resource ':/qfluentwidgets/images/logo.png'
-	// (not embedded here), so the window icon is skipped.
+	// NOTE: the Python uses a logo from its Qt resource bundle (not embedded
+	// here), so the window icon is skipped.
 	w.SetWindowTitle("PyQt-Fluent-Widgets")
 	w.titleBar.SetAttribute(qt.WA_StyledBackground)
 	w.positionTitleBar()

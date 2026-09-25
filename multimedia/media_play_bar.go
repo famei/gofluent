@@ -392,8 +392,10 @@ func NewStandardMediaPlayBar(parent *qt.QWidget) *StandardMediaPlayBar {
 	w.centerButtonLayout = qt.NewQHBoxLayout(w.centerButtonContainer)
 	w.rightButtonLayout = qt.NewQHBoxLayout(w.rightButtonContainer)
 
-	w.skipBackButton = NewMediaPlayBarButton(common.SkipBack, w.QWidget)
-	w.skipForwardButton = NewMediaPlayBarButton(common.SkipForward, w.QWidget)
+	// The Segoe Fluent Icons font spells these two glyphs SkipBack10/SkipForward30,
+	// which is also what the buttons do: skipBack seeks 10s and skipForward 30s.
+	w.skipBackButton = NewMediaPlayBarButton(common.SkipBack10, w.QWidget)
+	w.skipForwardButton = NewMediaPlayBarButton(common.SkipForward30, w.QWidget)
 	w.currentTimeLabel = widgets.NewCaptionLabelText("0:00:00", w.QWidget)
 	w.remainTimeLabel = widgets.NewCaptionLabelText("0:00:00", w.QWidget)
 

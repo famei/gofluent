@@ -3,7 +3,8 @@ package dialog_box
 import (
 	"unsafe"
 
-	"github.com/famei/gofluent/internal/win32"
+	"github.com/famei/gofluent/components/widgets"
+	"github.com/famei/gofluent/internal/platform"
 	qt "github.com/mappu/miqt/qt"
 )
 
@@ -25,18 +26,18 @@ func installFramelessDrag(win *qt.QDialog, titleWidget *qt.QWidget) {
 		eventType []byte, message unsafe.Pointer, result *int64) bool {
 
 		if string(eventType) == "windows_generic_MSG" {
-			msg := (*win32.MSG)(message)
+			msg := (*platform.MSG)(message)
 			switch msg.Message {
-			case win32.WM_NCHITTEST:
+			case platform.WM_NCHITTEST:
 				if code := framelessHitTest(win, titleWidget); code != 0 {
 					// Writing the hit code through the low 4 bytes avoids
 					// overflowing the 4-byte long slot.
 					*(*int32)(unsafe.Pointer(result)) = int32(code)
 					return true
 				}
-			case win32.WM_NCCALCSIZE:
+			case platform.WM_NCCALCSIZE:
 				if msg.WParam != 0 {
-					*(*int32)(unsafe.Pointer(result)) = int32(win32.WVR_REDRAW)
+					*(*int32)(unsafe.Pointer(result)) = int32(platform.WVR_REDRAW)
 				} else {
 					*(*int32)(unsafe.Pointer(result)) = 0
 				}
@@ -51,7 +52,7 @@ func installFramelessDrag(win *qt.QDialog, titleWidget *qt.QWidget) {
 // HTCLIENT otherwise (the windows are fixed-size, so no resize codes).
 func framelessHitTest(win *qt.QDialog, titleWidget *qt.QWidget) int32 {
 	if titleWidget == nil {
-		return win32.HTCLIENT
+		return platform.HTCLIENT
 	}
 
 	global := qt.QCursor_Pos()        // GoGC-armed — do NOT Delete
@@ -60,24 +61,35 @@ func framelessHitTest(win *qt.QDialog, titleWidget *qt.QWidget) int32 {
 
 	if x >= titleWidget.X() && x < titleWidget.X()+titleWidget.Width() &&
 		y >= titleWidget.Y() && y < titleWidget.Y()+titleWidget.Height() {
-		return win32.HTCAPTION
+		return platform.HTCAPTION
 	}
-	return win32.HTCLIENT
+	return platform.HTCLIENT
 }
 
-// installFramelessShadow applies the native shadow and the Windows 11
-// rounded-corner preference once the window's native handle is available.
+// installFramelessShadow applies the native shadow and the Windows 11 rounded-corner
+// preference once the window's native handle is available.
+//
+// The dialogs are translucent and paint their own rounded shape with a shadow inside
+// their rectangle, so only the DWM preference is requested: the Windows 10 window-region
+// fallback would clip that shadow and make the smooth corners jagged.
+//
+// Linux has neither DWM nor a window manager that rounds the window for us, so there the
+// corners are cut out of the window itself with a widget mask (the same mechanism
+// widgets.FramelessWindow uses).
 func installFramelessShadow(win *qt.QDialog) {
 	win.OnShowEvent(func(super func(e *qt.QShowEvent), e *qt.QShowEvent) {
 		super(e)
-		hwnd := win32.HWND(win.WinId())
-		style := win32.GetWindowLongPtr(hwnd, win32.GWL_STYLE)
+		if platform.SetWindowRoundedMask(win.QWidget, widgets.DefaultCornerRadius()) {
+			return
+		}
+		hwnd := platform.HWND(win.WinId())
+		style := platform.GetWindowLongPtr(hwnd, platform.GWL_STYLE)
 		// WS_CAPTION keeps the native shadow/frame extension from leaving a
 		// resize-border inset (the WM_NCCALCSIZE handler then returns the full
 		// client rect), matching qframelesswindow's FramelessDialog.
-		style |= win32.WS_THICKFRAME | win32.WS_CAPTION
-		win32.SetWindowLongPtr(hwnd, win32.GWL_STYLE, style)
-		_ = win32.DwmExtendFrameIntoClientArea(hwnd, &win32.MARGINS{Left: -1, Right: -1, Top: -1, Bottom: -1})
-		win32.EnableRoundedCorners(hwnd)
+		style |= platform.WS_THICKFRAME | platform.WS_CAPTION
+		platform.SetWindowLongPtr(hwnd, platform.GWL_STYLE, style)
+		_ = platform.DwmExtendFrameIntoClientArea(hwnd, &platform.MARGINS{Left: -1, Right: -1, Top: -1, Bottom: -1})
+		platform.EnableDWMCornerPreference(hwnd)
 	})
 }

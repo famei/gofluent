@@ -2,6 +2,7 @@ package widgets
 
 import (
 	"github.com/famei/gofluent/common"
+	"github.com/famei/gofluent/internal/platform"
 	qt "github.com/mappu/miqt/qt"
 )
 
@@ -36,11 +37,19 @@ type ToolTip struct {
 	timer           *qt.QTimer
 	containerLayout *qt.QHBoxLayout
 	label           *qt.QLabel
-	opacityAni      *qt.QPropertyAnimation
 	shadowEffect    *qt.QGraphicsDropShadowEffect
 	anchorWidget    *qt.QWidget
 	anchorPosition  ToolTipPosition
+
+	// anchorFilter corrects the position when the window manager moves the window behind
+	// our back after showing it (see installAnchorGuard).
+	anchorFilter *qt.QObject
+	// anchorCorrected limits that correction to one per show.
+	anchorCorrected bool
 }
+
+// toolTipFadeDuration is the length of the fade-in of a tooltip, in milliseconds.
+const toolTipFadeDuration = 150
 
 // NewToolTip builds a tooltip.
 func NewToolTip(text string, parent *qt.QWidget) *ToolTip {
@@ -59,16 +68,7 @@ func NewToolTip(text string, parent *qt.QWidget) *ToolTip {
 	w.containerLayout.AddWidget(w.label.QWidget)
 	w.containerLayout.SetContentsMargins(8, 6, 8, 6)
 
-	w.opacityAni = qt.NewQPropertyAnimation2(w.QObject, []byte("windowOpacity"))
-	w.opacityAni.SetDuration(150)
-
-	w.shadowEffect = qt.NewQGraphicsDropShadowEffect2(w.QObject)
-	w.shadowEffect.SetBlurRadius(25)
-	shadowColor := qt.NewQColor11(0, 0, 0, 50)
-	w.shadowEffect.SetColor(shadowColor)
-	shadowColor.Delete()
-	w.shadowEffect.SetOffset2(0, 5)
-	w.container.SetGraphicsEffect(w.shadowEffect.QGraphicsEffect)
+	w.installShadowEffect()
 
 	w.timer.SetSingleShot(true)
 	w.timer.OnTimeout(func() {
@@ -78,40 +78,86 @@ func NewToolTip(text string, parent *qt.QWidget) *ToolTip {
 	w.SetAttribute(qt.WA_TransparentForMouseEvents)
 	w.SetAttribute(qt.WA_TranslucentBackground)
 	w.SetAttribute(qt.WA_ShowWithoutActivating)
-	w.SetWindowFlags(qt.Tool | qt.FramelessWindowHint | qt.WindowStaysOnTopHint | qt.NoDropShadowWindowHint)
+	w.SetWindowFlags(platform.FloatingWindowFlags() | qt.NoDropShadowWindowHint)
 	w.setQss()
 
 	w.OnShowEvent(func(super func(e *qt.QShowEvent), e *qt.QShowEvent) {
-		start := qt.NewQVariant12(0)
-		w.opacityAni.SetStartValue(start)
-		start.Delete()
-		end := qt.NewQVariant12(1)
-		w.opacityAni.SetEndValue(end)
-		end.Delete()
-		w.opacityAni.Start()
+		// The fade is a graphics effect on the container instead of the window opacity the
+		// Python original animates: windowOpacity needs a compositor that honours
+		// _NET_WM_WINDOW_OPACITY (WSLg's Weston does not, which is why the tooltip used to
+		// pop in without any animation), and a graphics effect on a top level window is
+		// never repainted on X11. The container carries the drop shadow as its graphics
+		// effect and Qt gives a widget only one, so the shadow comes back when the fade ends.
+		common.FadeInThen(w.container.QWidget, toolTipFadeDuration, qt.NewQEasingCurve3(qt.QEasingCurve__InSine),
+			func() { w.installShadowEffect() })
 		w.timer.Stop()
 		if w.duration > 0 {
-			w.timer.Start(w.duration + w.opacityAni.Duration())
+			w.timer.Start(w.duration + toolTipFadeDuration)
 		}
 		super(e)
 		// Re-anchor after the show event so the position is computed from the
 		// tooltip's finalized size (the layout/QSS may not be fully polished
-		// before the first show), keeping it anchored to its target widget.
-		if w.anchorWidget != nil {
-			pos := toolTipPosition(w, w.anchorWidget, w.anchorPosition)
-			w.Move(pos.X(), pos.Y())
-			pos.Delete()
-		}
+		// before the first show), keeping it anchored to its target widget ...
+		w.anchorCorrected = false
+		w.reanchor()
+		// ... and again once the window is mapped: a position set before the map can be
+		// overridden by the window manager (see common.ApplyAfterMap).
+		common.ApplyAfterMap(w.QWidget, w.reanchor)
 	})
 	w.OnHideEvent(func(super func(e *qt.QHideEvent), e *qt.QHideEvent) {
 		w.timer.Stop()
 		super(e)
 	})
+	w.installAnchorGuard()
 	return w
+}
+
+// installAnchorGuard re-applies the anchor when the window manager moves the tooltip behind
+// our back right after showing it. WSLg's XWM (Weston) places a window that is mapped again
+// one frame margin off the position Qt gave it and does not tell Qt, so a tooltip that is
+// hovered over and over walks towards the top left by (-32,-32) per hover. The placement does
+// arrive as a move event, which is the signal used here; one correction per show is enough,
+// and it keeps the tooltip from fighting a window manager that moves the popup for a reason.
+func (w *ToolTip) installAnchorGuard() {
+	w.anchorFilter = qt.NewQObject2(w.QObject)
+	w.InstallEventFilter(w.anchorFilter)
+	w.anchorFilter.OnEventFilter(func(super func(watched *qt.QObject, event *qt.QEvent) bool, watched *qt.QObject, event *qt.QEvent) bool {
+		if event.Type() == qt.QEvent__Move && !w.anchorCorrected && w.IsVisible() && w.anchorWidget != nil {
+			w.anchorCorrected = true
+			w.reanchor()
+		}
+		return super(watched, event)
+	})
+}
+
+// reanchor moves the tooltip so that its content sits where the target widget asks for (see
+// common.MoveWindowContentTo: move() would place the window frame there instead, which a
+// window manager that decorates the window turns into an offset).
+func (w *ToolTip) reanchor() {
+	if w.anchorWidget == nil {
+		return
+	}
+	pos := toolTipPosition(w, w.anchorWidget, w.anchorPosition)
+	common.MoveWindowContentTo(w.QWidget, pos.X(), pos.Y())
+	pos.Delete()
 }
 
 func (w *ToolTip) createContainer() *qt.QFrame {
 	return qt.NewQFrame(w.QWidget)
+}
+
+// installShadowEffect puts the drop shadow on the container. The fade-in replaces it with
+// an opacity effect (a widget has room for one graphics effect only) and QWidget deletes the
+// effect it replaces, so a fresh shadow effect is built every time instead of reusing the
+// previous one.
+func (w *ToolTip) installShadowEffect() {
+	w.shadowEffect = qt.NewQGraphicsDropShadowEffect2(w.QObject)
+	w.shadowEffect.SetBlurRadius(25)
+	shadowColor := qt.NewQColor11(0, 0, 0, 50)
+	w.shadowEffect.SetColor(shadowColor)
+	shadowColor.Delete()
+	w.shadowEffect.SetOffset2(0, 5)
+	w.container.SetGraphicsEffect(w.shadowEffect.QGraphicsEffect)
 }
 
 // Text returns the tooltip text.
@@ -143,9 +189,7 @@ func (w *ToolTip) setQss() {
 func (w *ToolTip) AdjustPos(widget *qt.QWidget, position ToolTipPosition) {
 	w.anchorWidget = widget
 	w.anchorPosition = position
-	pos := toolTipPosition(w, widget, position)
-	w.Move(pos.X(), pos.Y())
-	pos.Delete()
+	w.reanchor()
 }
 
 // toolTipPosition computes the screen-clamped position of the tooltip relative
@@ -185,7 +229,7 @@ func toolTipPosition(tooltip *ToolTip, parent *qt.QWidget, position ToolTipPosit
 		y += parent.Height()
 	}
 
-	screen := common.GetCurrentScreenGeometry(false)
+	screen := common.GetWidgetScreenGeometry(parent, false)
 	if screen != nil {
 		// screen is GoGC-armed (QScreen.Geometry) — do NOT Delete
 		if x < screen.Left() {
@@ -233,8 +277,17 @@ func NewToolTipFilter(parent *qt.QWidget, showDelay int, position ToolTipPositio
 		switch event.Type() {
 		case qt.QEvent__ToolTip:
 			return true
-		case qt.QEvent__Hide, qt.QEvent__Leave:
+		case qt.QEvent__Hide:
 			w.hideToolTip()
+		case qt.QEvent__Leave:
+			// A foreign window can sit on top of the cursor and steal the pointer - a
+			// window manager frame drawn around the tooltip window, or WSLg's presentation
+			// wrapper - and Qt then reports a Leave although the cursor never left the
+			// widget. Hiding on that would kill the tooltip the moment it appears, so the
+			// cursor position decides.
+			if !w.cursorOverParent() {
+				w.hideToolTip()
+			}
 		case qt.QEvent__Enter:
 			w.isEnter = true
 			if w.canShowToolTip() {
@@ -262,6 +315,20 @@ func (w *ToolTipFilter) createToolTip() *ToolTip {
 
 // HideToolTip hides the tooltip and stops the show timer.
 func (w *ToolTipFilter) HideToolTip() { w.hideToolTip() }
+
+// cursorOverParent reports whether the mouse cursor is still inside the filtered widget,
+// which is what decides whether a Leave event really means the pointer moved away.
+func (w *ToolTipFilter) cursorOverParent() bool {
+	if w.parentWidget == nil || !w.parentWidget.IsVisible() {
+		return false
+	}
+	origin := qt.NewQPoint2(0, 0)
+	topLeft := w.parentWidget.MapToGlobal(origin)
+	origin.Delete()
+	pos := qt.QCursor_Pos() // GoGC-armed — do NOT Delete
+	return pos.X() >= topLeft.X() && pos.X() < topLeft.X()+w.parentWidget.Width() &&
+		pos.Y() >= topLeft.Y() && pos.Y() < topLeft.Y()+w.parentWidget.Height()
+}
 
 func (w *ToolTipFilter) hideToolTip() {
 	w.isEnter = false

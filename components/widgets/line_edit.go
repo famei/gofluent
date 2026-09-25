@@ -423,9 +423,10 @@ func (w *PasswordLineEdit) SetViewPasswordButtonVisible(isVisible bool) {
 	w.viewButton.SetVisible(isVisible)
 }
 
-// TextEdit is a fluent multi-line text edit.
+// TextEdit is a fluent multi-line text edit with the fluent overlay scroll bars.
 type TextEdit struct {
 	*qt.QTextEdit
+	scrollDelegate *SmoothScrollDelegate
 }
 
 // NewTextEdit builds a text edit.
@@ -433,12 +434,17 @@ func NewTextEdit(parent *qt.QWidget) *TextEdit {
 	w := &TextEdit{QTextEdit: qt.NewQTextEdit(parent)}
 	common.FluentStyleSheet(common.FluentLineEdit).Apply(w.QWidget, common.ThemeAuto)
 	common.SetFont(w.QWidget, 14, 400)
+	// The native scroll bars are hidden and replaced by the fluent overlay bars,
+	// exactly like every other scrollable fluent widget (without it a text edit
+	// keeps the plain Qt scroll bars).
+	w.scrollDelegate = NewSmoothScrollDelegate(w.QAbstractScrollArea, false)
 	return w
 }
 
-// PlainTextEdit is a fluent plain text edit.
+// PlainTextEdit is a fluent plain text edit with the fluent overlay scroll bars.
 type PlainTextEdit struct {
 	*qt.QPlainTextEdit
+	scrollDelegate *SmoothScrollDelegate
 }
 
 // NewPlainTextEdit builds a plain text edit.
@@ -446,12 +452,15 @@ func NewPlainTextEdit(parent *qt.QWidget) *PlainTextEdit {
 	w := &PlainTextEdit{QPlainTextEdit: qt.NewQPlainTextEdit(parent)}
 	common.FluentStyleSheet(common.FluentLineEdit).Apply(w.QWidget, common.ThemeAuto)
 	common.SetFont(w.QWidget, 14, 400)
+	w.scrollDelegate = NewSmoothScrollDelegate(w.QAbstractScrollArea, false)
 	return w
 }
 
-// TextBrowser is a fluent read-only rich text browser.
+// TextBrowser is a fluent read-only rich text browser with the fluent overlay
+// scroll bars.
 type TextBrowser struct {
 	*qt.QTextBrowser
+	scrollDelegate *SmoothScrollDelegate
 }
 
 // NewTextBrowser builds a text browser.
@@ -459,5 +468,6 @@ func NewTextBrowser(parent *qt.QWidget) *TextBrowser {
 	w := &TextBrowser{QTextBrowser: qt.NewQTextBrowser(parent)}
 	common.FluentStyleSheet(common.FluentLineEdit).Apply(w.QWidget, common.ThemeAuto)
 	common.SetFont(w.QWidget, 14, 400)
+	w.scrollDelegate = NewSmoothScrollDelegate(w.QAbstractScrollArea, false)
 	return w
 }

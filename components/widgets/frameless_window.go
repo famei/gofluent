@@ -2,10 +2,12 @@ package widgets
 
 import (
 	"fmt"
+	"math"
 	"os"
+	"runtime"
 	"unsafe"
 
-	"github.com/famei/gofluent/internal/win32"
+	"github.com/famei/gofluent/internal/platform"
 	qt "github.com/mappu/miqt/qt"
 )
 
@@ -36,6 +38,62 @@ type FramelessWindow struct {
 	manual            manualResize
 	resizeCursorShape qt.CursorShape
 	resizeCursorSet   bool
+
+	// cornerRadius is the rounded-corner radius in logical pixels (see
+	// SetCornerRadius); rounded records what was applied last so a resize only
+	// re-applies the region when something actually changed.
+	cornerRadius int
+	rounded      roundedState
+	// roundedFilter re-applies the corners on show/resize (see
+	// installRoundedCornerFilter).
+	roundedFilter *qt.QObject
+}
+
+// CornerRoundingKind says how a frameless window rounds its corners.
+type CornerRoundingKind int
+
+const (
+	// CornerRoundingNone leaves the window square (radius 0, a maximized window, or a
+	// platform whose window server has no rounding this library can ask for).
+	CornerRoundingNone CornerRoundingKind = iota
+	// CornerRoundingDWM is the Windows 11 DWM corner preference
+	// (DWMWA_WINDOW_CORNER_PREFERENCE): smooth corners drawn by the window manager.
+	CornerRoundingDWM
+	// CornerRoundingRegion is a window region (SetWindowRgn), the Windows 10 fallback:
+	// Windows 10 ignores the DWM corner preference, so the corners are cut out of the
+	// window itself. A region is a 1 bit mask, so these corners are not anti-aliased.
+	CornerRoundingRegion
+	// CornerRoundingMask is the Linux/X11 way: QWidget.SetMask cuts the corners through
+	// the Shape extension, which clips the window and everything inside it. Wayland has
+	// no client side shape — a Wayland session runs X11 clients through XWayland, which
+	// applies the shape. Like the Windows 10 region the mask is not anti-aliased.
+	CornerRoundingMask
+)
+
+// String returns the rounding kind as it is printed in diagnostics.
+func (k CornerRoundingKind) String() string {
+	switch k {
+	case CornerRoundingDWM:
+		return "DWM corner preference (Windows 11)"
+	case CornerRoundingRegion:
+		return "window region (Windows 10 fallback)"
+	case CornerRoundingMask:
+		return "window mask (Linux/X11 shape)"
+	default:
+		return "none"
+	}
+}
+
+// roundedState remembers the window geometry and state the rounded corners were
+// applied for, so a resize does not repeat the platform calls for every step that keeps
+// the same size.
+type roundedState struct {
+	valid     bool
+	width     int
+	height    int
+	maximized bool
+	radius    int
+	kind      CornerRoundingKind
 }
 
 // NewFramelessWindow builds a frameless window with resizing, moving, title-bar
@@ -47,11 +105,38 @@ func NewFramelessWindow(parent *qt.QWidget) *FramelessWindow {
 	w.moveEnabled = true
 	w.titleBarVisible = true
 	w.doubleClickEnabled = true
+	w.cornerRadius = platform.DefaultCornerRadius
 	w.installNativeHook()
 	w.installShowHook()
 	w.installResizeHook()
 	w.installMouseMoveDrag()
+	w.installRoundedCornerFilter()
+	if runtime.GOOS != "windows" {
+		// WM_NCHITTEST does not exist outside Windows, so the native route never sees a
+		// drag there: enable the Qt routes instead, which hand the move over to
+		// QWindow::startSystemMove (X11/Wayland) and resize the window from the mouse
+		// handler. See both setters for the caveats of the resize route.
+		w.SetMouseMoveDragEnabled(true)
+		w.SetMouseMoveResizeEnabled(true)
+	}
 	return w
+}
+
+// installRoundedCornerFilter re-applies the rounded corners whenever the window is
+// shown or resized. A QObject event filter is used (rather than the Qt resize hook)
+// because the window subclasses register their own OnResizeEvent handler, which replaces
+// - and would silently drop - the one of FramelessWindow. The filter never consumes an
+// event.
+func (w *FramelessWindow) installRoundedCornerFilter() {
+	w.roundedFilter = qt.NewQObject2(w.QObject)
+	w.InstallEventFilter(w.roundedFilter)
+	w.roundedFilter.OnEventFilter(func(super func(watched *qt.QObject, event *qt.QEvent) bool, watched *qt.QObject, event *qt.QEvent) bool {
+		switch event.Type() {
+		case qt.QEvent__Resize, qt.QEvent__Show:
+			w.applyRoundedCorners()
+		}
+		return super(watched, event)
+	})
 }
 
 // SetShownHandler registers a callback invoked after the native frame is
@@ -109,10 +194,21 @@ func (w *FramelessWindow) IsMouseMoveDragEnabled() bool { return w.dragByMouseMo
 // SetMouseMoveDragEnabled route does exactly that) or from a timer, not from a
 // paint/layout path. Safe to call when nothing is pressed: the move ends as soon as
 // the system sees no button down.
+//
+// Outside Windows there is no such message: the move is handed to
+// QWindow::startSystemMove, which asks the window system to start its own move
+// (X11 and Wayland both implement it). It returns false when the platform cannot
+// start a move right then - typically because no button is pressed.
 func (w *FramelessWindow) StartSystemMove() {
-	hwnd := win32.HWND(w.WinId())
-	win32.ReleaseCapture()
-	win32.SendMessage(hwnd, win32.WM_NCLBUTTONDOWN, uintptr(win32.HTCAPTION), 0)
+	if runtime.GOOS != "windows" {
+		if handle := w.WindowHandle(); handle != nil {
+			handle.StartSystemMove()
+		}
+		return
+	}
+	hwnd := platform.HWND(w.WinId())
+	platform.ReleaseCapture()
+	platform.SendMessage(hwnd, platform.WM_NCLBUTTONDOWN, uintptr(platform.HTCAPTION), 0)
 }
 
 // StartSystemResize hands a border resize over to the system's modal size loop: it
@@ -124,27 +220,59 @@ func (w *FramelessWindow) StartSystemMove() {
 // lParam (the WM_NCLBUTTONDOWN convention: the cursor in physical screen
 // coordinates); sending 0 there leaves the loop without an anchor and no edge
 // resizes at all, so the position is passed explicitly. Qt's QCursor::pos is in
-// logical pixels, hence win32.GetCursorPos.
+// logical pixels, hence platform.GetCursorPos.
 //
 // Like StartSystemMove it blocks until the resize ends, so call it from a mouse
 // handler or a timer.
+//
+// Outside Windows the hit code is translated to the qt.Edge mask the platform wants
+// and handed to QWindow::startSystemResize. Linux/X11 window managers differ in what
+// they support: when the request is refused, the caller still has the window-driven
+// route (SetMouseMoveResizeEnabled), which resizes without the window system.
 func (w *FramelessWindow) StartSystemResize(hitCode int32) {
 	if !isResizeHitCode(hitCode) {
 		return
 	}
-	hwnd := win32.HWND(w.WinId())
-	x, y := win32.GetCursorPos()
+	if runtime.GOOS != "windows" {
+		if handle := w.WindowHandle(); handle != nil {
+			handle.StartSystemResize(resizeEdges(hitCode))
+		}
+		return
+	}
+	hwnd := platform.HWND(w.WinId())
+	x, y := platform.GetCursorPos()
 	lparam := uintptr(uint32(x)&0xFFFF | uint32(y)<<16)
-	win32.ReleaseCapture()
-	win32.SendMessage(hwnd, win32.WM_NCLBUTTONDOWN, uintptr(hitCode), lparam)
+	platform.ReleaseCapture()
+	platform.SendMessage(hwnd, platform.WM_NCLBUTTONDOWN, uintptr(hitCode), lparam)
+}
+
+// resizeEdges converts a WM_NCHITTEST resize code to the qt.Edge mask used by
+// QWindow::startSystemResize. The codes are Windows constants but the eight
+// directions they name are the same everywhere, and HitTest returns them on every
+// platform.
+func resizeEdges(hitCode int32) qt.Edge {
+	var edges qt.Edge
+	switch hitCode {
+	case platform.HTLEFT, platform.HTTOPLEFT, platform.HTBOTTOMLEFT:
+		edges |= qt.LeftEdge
+	case platform.HTRIGHT, platform.HTTOPRIGHT, platform.HTBOTTOMRIGHT:
+		edges |= qt.RightEdge
+	}
+	switch hitCode {
+	case platform.HTTOP, platform.HTTOPLEFT, platform.HTTOPRIGHT:
+		edges |= qt.TopEdge
+	case platform.HTBOTTOM, platform.HTBOTTOMLEFT, platform.HTBOTTOMRIGHT:
+		edges |= qt.BottomEdge
+	}
+	return edges
 }
 
 // isResizeHitCode reports whether a WM_NCHITTEST code is one of the eight border
 // resize codes.
 func isResizeHitCode(code int32) bool {
 	switch code {
-	case win32.HTLEFT, win32.HTRIGHT, win32.HTTOP, win32.HTBOTTOM,
-		win32.HTTOPLEFT, win32.HTTOPRIGHT, win32.HTBOTTOMLEFT, win32.HTBOTTOMRIGHT:
+	case platform.HTLEFT, platform.HTRIGHT, platform.HTTOP, platform.HTBOTTOM,
+		platform.HTTOPLEFT, platform.HTTOPRIGHT, platform.HTBOTTOMLEFT, platform.HTBOTTOMRIGHT:
 		return true
 	}
 	return false
@@ -192,37 +320,37 @@ func (w *FramelessWindow) manualResizeTo(globalX, globalY int) {
 
 	x, y, cw, ch := m.winX, m.winY, m.winW, m.wH
 	switch m.code {
-	case win32.HTLEFT:
+	case platform.HTLEFT:
 		x, cw = m.winX+dx, m.winW-dx
-	case win32.HTRIGHT:
+	case platform.HTRIGHT:
 		cw = m.winW + dx
-	case win32.HTTOP:
+	case platform.HTTOP:
 		y, ch = m.winY+dy, m.wH-dy
-	case win32.HTBOTTOM:
+	case platform.HTBOTTOM:
 		ch = m.wH + dy
-	case win32.HTTOPLEFT:
+	case platform.HTTOPLEFT:
 		x, cw = m.winX+dx, m.winW-dx
 		y, ch = m.winY+dy, m.wH-dy
-	case win32.HTTOPRIGHT:
+	case platform.HTTOPRIGHT:
 		cw = m.winW + dx
 		y, ch = m.winY+dy, m.wH-dy
-	case win32.HTBOTTOMLEFT:
+	case platform.HTBOTTOMLEFT:
 		x, cw = m.winX+dx, m.winW-dx
 		ch = m.wH + dy
-	case win32.HTBOTTOMRIGHT:
+	case platform.HTBOTTOMRIGHT:
 		cw = m.winW + dx
 		ch = m.wH + dy
 	}
 
 	// Keep the opposite edge anchored while the dragged edge hits the minimum size.
 	if cw < minW {
-		if m.code == win32.HTLEFT || m.code == win32.HTTOPLEFT || m.code == win32.HTBOTTOMLEFT {
+		if m.code == platform.HTLEFT || m.code == platform.HTTOPLEFT || m.code == platform.HTBOTTOMLEFT {
 			x = m.winX + m.winW - minW
 		}
 		cw = minW
 	}
 	if ch < minH {
-		if m.code == win32.HTTOP || m.code == win32.HTTOPLEFT || m.code == win32.HTTOPRIGHT {
+		if m.code == platform.HTTOP || m.code == platform.HTTOPLEFT || m.code == platform.HTTOPRIGHT {
 			y = m.winY + m.wH - minH
 		}
 		ch = minH
@@ -253,8 +381,8 @@ func (w *FramelessWindow) manualResizeTo(globalX, globalY int) {
 		// A window *move* also leaves the DWM frame and its shadow painted where the
 		// window used to be; DWM recomputes them on a size change but not reliably on a
 		// move. Invalidating the frame makes DWM redraw it.
-		win32.RedrawWindow(win32.HWND(w.WinId()),
-			win32.RDW_INVALIDATE|win32.RDW_FRAME|win32.RDW_UPDATENOW|win32.RDW_ALLCHILDREN)
+		platform.RedrawWindow(platform.HWND(w.WinId()),
+			platform.RDW_INVALIDATE|platform.RDW_FRAME|platform.RDW_UPDATENOW|platform.RDW_ALLCHILDREN)
 		// A child that has its own native window (an embedded browser, a widget that
 		// asked for a native surface) paints itself and is therefore *not* repainted by
 		// the window's repaint.
@@ -288,7 +416,7 @@ func frameLogResize(w *FramelessWindow) {
 		if name == "" {
 			name = classNameOf(cw)
 		}
-		line += fmt.Sprintf("  %s screen=(%d,%d) %dx%d native=%v parent=%d", name, p.X(), p.Y(), cw.Width(), cw.Height(), cw.InternalWinId() != 0, win32.GetParent(win32.HWND(cw.InternalWinId())))
+		line += fmt.Sprintf("  %s screen=(%d,%d) %dx%d native=%v parent=%d", name, p.X(), p.Y(), cw.Width(), cw.Height(), cw.InternalWinId() != 0, platform.GetParent(platform.HWND(cw.InternalWinId())))
 		shown++
 	}
 	frameLog("%s", line)
@@ -341,6 +469,28 @@ func classNameOf(w *qt.QWidget) string {
 // drag route necessary. The border that starts the resize is the same for both
 // routes (HitTest), so the Qt route needs the border to be free of native child
 // windows (keep a margin larger than the border width around embedded views).
+//
+// Caveats — this route changes how mouse events reach every widget of the window:
+//
+//   - It turns mouse tracking on for the window and every child widget
+//     (enableMouseTrackingDeep), and refreshes it on each resize, because the resize
+//     cursor has to keep updating even where a child covers the border. Qt's default is
+//     the opposite: a widget without mouse tracking only receives MouseMove while a
+//     button is held, and that assumption is what most mouse handlers are written
+//     against.
+//   - As a result a plain hover (no button) now arrives at child widgets as MouseMove
+//     too. Any handler that acts on a move must ignore events with
+//     Buttons() == qt.NoButton or gate itself on its own press state, otherwise the
+//     widget reacts to hovering alone. A fluent overlay scroll bar did exactly that and
+//     scrolled the table under the pointer. The library's own controls are guarded:
+//     ScrollBar (isPressed plus a held button), Slider, TabItem and HuePanel all require
+//     a button press. A custom or third-party widget added to such a window needs its
+//     own guard.
+//   - Turning the route off again does not restore the previous tracking state: it is
+//     only ever enabled, never disabled, for widgets that were already reached.
+//
+// Only this resize route enables tracking deep in the tree; SetMouseMoveDragEnabled
+// leaves the children alone.
 func (w *FramelessWindow) SetMouseMoveResizeEnabled(isEnabled bool) {
 	w.resizeByMouseMove = isEnabled
 	if isEnabled {
@@ -366,13 +516,13 @@ func (w *FramelessWindow) useResizeCursor(code int32) {
 	}
 	var shape qt.CursorShape
 	switch code {
-	case win32.HTLEFT, win32.HTRIGHT:
+	case platform.HTLEFT, platform.HTRIGHT:
 		shape = qt.SizeHorCursor
-	case win32.HTTOP, win32.HTBOTTOM:
+	case platform.HTTOP, platform.HTBOTTOM:
 		shape = qt.SizeVerCursor
-	case win32.HTTOPLEFT, win32.HTBOTTOMRIGHT:
+	case platform.HTTOPLEFT, platform.HTBOTTOMRIGHT:
 		shape = qt.SizeFDiagCursor
-	case win32.HTTOPRIGHT, win32.HTBOTTOMLEFT:
+	case platform.HTTOPRIGHT, platform.HTBOTTOMLEFT:
 		shape = qt.SizeBDiagCursor
 	default:
 		if w.resizeCursorSet {
@@ -441,7 +591,7 @@ func (w *FramelessWindow) installMouseMoveDrag() {
 		code := w.HitTest(pos.X(), pos.Y())
 		frameLog("press at (%d,%d) -> hitTest=%d dragMode=%v resizeMode=%v",
 			pos.X(), pos.Y(), code, w.dragByMouseMove, w.resizeByMouseMove)
-		if w.dragByMouseMove && code == win32.HTCAPTION {
+		if w.dragByMouseMove && code == platform.HTCAPTION {
 			w.mouseMoveDragging = true
 			return
 		}
@@ -497,7 +647,7 @@ func (w *FramelessWindow) installMouseMoveDrag() {
 			return
 		}
 		pos := e.Pos() // GoGC-armed —do NOT Delete
-		if w.HitTest(pos.X(), pos.Y()) != win32.HTCAPTION {
+		if w.HitTest(pos.X(), pos.Y()) != platform.HTCAPTION {
 			return
 		}
 		if w.IsMaximized() {
@@ -548,6 +698,9 @@ func (w *FramelessWindow) installResizeHook() {
 		if w.resizeByMouseMove {
 			enableMouseTrackingDeep(w.QWidget)
 		}
+		// The rounded corners follow the window size (and stop at the screen edges
+		// while maximized).
+		w.applyRoundedCorners()
 	})
 }
 
@@ -615,9 +768,9 @@ func (w *FramelessWindow) installNativeHook() {
 
 		// Qt passes "windows_generic_MSG" for every native Windows message.
 		if string(eventType) == "windows_generic_MSG" {
-			msg := (*win32.MSG)(message)
+			msg := (*platform.MSG)(message)
 			switch msg.Message {
-			case win32.WM_NCHITTEST:
+			case platform.WM_NCHITTEST:
 				if code := w.nativeHitTest(); code != 0 {
 					// miqt Qt5 binds C's 32-bit long* as a Go *int64. Writing
 					// all 8 bytes would overflow the 4-byte slot; only the low
@@ -625,12 +778,12 @@ func (w *FramelessWindow) installNativeHook() {
 					*(*int32)(unsafe.Pointer(result)) = int32(code)
 					return true
 				}
-			case win32.WM_NCCALCSIZE:
+			case platform.WM_NCCALCSIZE:
 				// Adjust the maximized client rect so the invisible resize
 				// border does not push the visible content past the work area
 				// (under the taskbar / off-screen). Mirror qframelesswindow's
 				// WM_NCCALCSIZE handler.
-				code := w.adjustMaximizedClientRect(win32.HWND(msg.HWnd), msg.WParam, msg.LParam)
+				code := w.adjustMaximizedClientRect(platform.HWND(msg.HWnd), msg.WParam, msg.LParam)
 				*(*int32)(unsafe.Pointer(result)) = int32(code)
 				return true
 			}
@@ -654,30 +807,170 @@ func (w *FramelessWindow) installShowHook() {
 // applyNativeFrame adds the native styles that enable 8-way resizing (via
 // WM_NCHITTEST) and the system maximize/restore/minimize animation, extends the
 // DWM frame into the client area (native shadow without a visible border) and
-// requests the Windows 11 rounded-corner preference.
+// rounds the window corners.
 func (w *FramelessWindow) applyNativeFrame() {
-	hwnd := win32.HWND(w.WinId())
+	hwnd := platform.HWND(w.WinId())
 
 	if w.resizeEnabled {
-		style := win32.GetWindowLongPtr(hwnd, win32.GWL_STYLE)
+		style := platform.GetWindowLongPtr(hwnd, platform.GWL_STYLE)
 		// WS_CAPTION is what makes Windows animate the maximize/restore
 		// transition; the DWM frame extension below hides the caption visually
 		// (mirrors qframelesswindow's addWindowAnimation).
-		style |= win32.WS_THICKFRAME | win32.WS_MAXIMIZEBOX | win32.WS_MINIMIZEBOX | win32.WS_CAPTION
-		win32.SetWindowLongPtr(hwnd, win32.GWL_STYLE, style)
+		style |= platform.WS_THICKFRAME | platform.WS_MAXIMIZEBOX | platform.WS_MINIMIZEBOX | platform.WS_CAPTION
+		platform.SetWindowLongPtr(hwnd, platform.GWL_STYLE, style)
 	}
-	_ = win32.DwmExtendFrameIntoClientArea(hwnd, &win32.MARGINS{Left: -1, Right: -1, Top: -1, Bottom: -1})
-	win32.EnableRoundedCorners(hwnd)
+	_ = platform.DwmExtendFrameIntoClientArea(hwnd, &platform.MARGINS{Left: -1, Right: -1, Top: -1, Bottom: -1})
+	w.rounded.valid = false
+	w.applyRoundedCorners()
+}
+
+// SetCornerRadius sets the corner radius of the frameless window in logical pixels.
+// 0 makes the window square. Windows 11 rounds the window through the DWM corner
+// preference; Windows 10 ignores that attribute, so the same corners are cut with a
+// window region (see applyRoundedCorners).
+func (w *FramelessWindow) SetCornerRadius(radius int) {
+	if radius < 0 {
+		radius = 0
+	}
+	w.cornerRadius = radius
+	w.applyRoundedCorners()
+}
+
+// CornerRadius returns the corner radius in logical pixels.
+func (w *FramelessWindow) CornerRadius() int { return w.cornerRadius }
+
+// DefaultCornerRadius returns the corner radius a frameless window starts with: 8
+// logical pixels, which matches the Windows 11 rounded-corner preference (and is what
+// the Windows 10 fallback cuts out of the window region).
+func DefaultCornerRadius() int { return platform.DefaultCornerRadius }
+
+// CornerRounding reports how the window corners are currently rounded (see
+// CornerRoundingKind). It is meant for diagnostics.
+func (w *FramelessWindow) CornerRounding() CornerRoundingKind {
+	if !w.rounded.valid {
+		return CornerRoundingNone
+	}
+	return w.rounded.kind
+}
+
+// RoundedByDWM reports whether the corners are rounded by the Windows 11 DWM corner
+// preference (rather than by a window region on Windows 10 or a window mask on Linux).
+func (w *FramelessWindow) RoundedByDWM() bool { return w.CornerRounding() == CornerRoundingDWM }
+
+// RefreshRoundedCorners re-applies the rounded corners, ignoring the "nothing changed"
+// cache. Call it when something the corners depend on changed outside the window: the
+// forced Windows 10 mode (see window.SetForceWindows10) or a screen DPI change.
+func (w *FramelessWindow) RefreshRoundedCorners() {
+	w.rounded.valid = false
+	w.applyRoundedCorners()
+}
+
+// applyRoundedCorners rounds the window corners for the current size and state, and
+// records how (see CornerRoundingKind). A maximized or full-screen window is left
+// square: its corners sit on the screen edges, where rounding would only clip the
+// content.
+//
+// Every platform rounds the window with the mechanism its window manager offers:
+//
+//   - Windows 11: the DWM corner preference, which is smooth and keeps the native
+//     shadow;
+//   - Windows 10: a window region (the DWM ignores the preference there), so the
+//     corners are cut out of the window and are not anti-aliased;
+//   - Linux/X11: a widget mask (QWidget.SetMask), which the X server applies through the
+//     Shape extension — also a 1 bit mask, and also not anti-aliased;
+//   - macOS: nothing, the window server rounds every window by itself.
+//
+// The mask and the Windows region clip the window with all its content, so they work
+// whatever the window paints.
+func (w *FramelessWindow) applyRoundedCorners() {
+	width, height := w.Width(), w.Height()
+	if width <= 0 || height <= 0 {
+		return
+	}
+	// Windows rounds the window through its native handle; the Linux mask is a widget
+	// property and does not need one.
+	if runtime.GOOS == "windows" && w.WinId() == 0 {
+		return
+	}
+
+	radius := w.cornerRadius
+	maximized := w.isFramelessMaximized()
+	if maximized {
+		radius = 0
+	}
+	// Windows rounds through the window itself (SetWindowRgn/CreateRoundRectRgn), which
+	// works in physical pixels, so the radius is scaled there. Qt's mask on Linux is in
+	// logical coordinates and Qt maps it to the device pixels of the screen.
+	deviceRadius := radius
+	if radius > 0 && runtime.GOOS == "windows" {
+		if dpr := w.DevicePixelRatioF(); dpr > 0.5 {
+			deviceRadius = int(math.Round(float64(radius) * dpr))
+		}
+	}
+
+	// Nothing changed since the last call: skip the platform round trip (this runs on
+	// every resize step).
+	last := w.rounded
+	if last.valid && last.width == width && last.height == height &&
+		last.maximized == maximized && last.radius == deviceRadius {
+		return
+	}
+
+	kind := CornerRoundingNone
+	switch {
+	case radius <= 0:
+		w.clearRoundedCorners()
+	case runtime.GOOS == "windows":
+		if platform.EnableRoundedCorners(platform.HWND(w.WinId()), deviceRadius) {
+			kind = CornerRoundingDWM
+		} else {
+			kind = CornerRoundingRegion
+		}
+	case runtime.GOOS == "linux":
+		platform.SetWindowRoundedMask(w.QWidget, radius)
+		kind = CornerRoundingMask
+	}
+
+	w.rounded = roundedState{
+		valid: true, width: width, height: height,
+		maximized: maximized, radius: deviceRadius, kind: kind,
+	}
+	frameLog("rounded corners: radius=%d max=%v kind=%v", deviceRadius, maximized, kind)
+}
+
+// isFramelessMaximized reports whether the window fills the screen, in which case the
+// corners are not rounded. Windows reads the live WS_MAXIMIZE style bit: Qt's
+// IsMaximized lags behind during a maximize/restore transition, which would leave the
+// rounding applied to a window that already fills the screen.
+func (w *FramelessWindow) isFramelessMaximized() bool {
+	if runtime.GOOS == "windows" {
+		if platform.IsZoomed(platform.HWND(w.WinId())) {
+			return true
+		}
+	}
+	return w.IsMaximized() || w.IsFullScreen()
+}
+
+// clearRoundedCorners removes whatever rounding was applied, making the window
+// rectangular again (a maximized or full-screen window, or a radius of 0).
+func (w *FramelessWindow) clearRoundedCorners() {
+	if runtime.GOOS == "windows" {
+		platform.ClearWindowRegion(platform.HWND(w.WinId()))
+		return
+	}
+	if runtime.GOOS == "linux" {
+		w.ClearMask()
+	}
 }
 
 // adjustMaximizedClientRect insets the WM_NCCALCSIZE client rect by the resize
 // border thickness while the window is maximized (and not full-screen), so the
 // invisible DWM-extended borders do not make the visible client area overflow
 // the monitor work area. It returns the WM_NCCALCSIZE LRESULT.
-func (w *FramelessWindow) adjustMaximizedClientRect(hwnd win32.HWND, wParam, lParam uintptr) int32 {
-	if !win32.IsZoomed(hwnd) || w.IsFullScreen() {
+func (w *FramelessWindow) adjustMaximizedClientRect(hwnd platform.HWND, wParam, lParam uintptr) int32 {
+	if !platform.IsZoomed(hwnd) || w.IsFullScreen() {
 		if wParam != 0 {
-			return win32.WVR_REDRAW
+			return platform.WVR_REDRAW
 		}
 		return 0
 	}
@@ -685,8 +978,8 @@ func (w *FramelessWindow) adjustMaximizedClientRect(hwnd win32.HWND, wParam, lPa
 	// SM_CXFRAME + SM_CXPADDEDBORDER (horizontal) / SM_CYFRAME +
 	// SM_CXPADDEDBORDER (vertical) is the thickness of the invisible resize
 	// border DWM paints for a WS_THICKFRAME window.
-	tx := int32(win32.GetSystemMetrics(win32.SM_CXFRAME) + win32.GetSystemMetrics(win32.SM_CXPADDEDBORDER))
-	ty := int32(win32.GetSystemMetrics(win32.SM_CYFRAME) + win32.GetSystemMetrics(win32.SM_CXPADDEDBORDER))
+	tx := int32(platform.GetSystemMetrics(platform.SM_CXFRAME) + platform.GetSystemMetrics(platform.SM_CXPADDEDBORDER))
+	ty := int32(platform.GetSystemMetrics(platform.SM_CYFRAME) + platform.GetSystemMetrics(platform.SM_CXPADDEDBORDER))
 	if tx <= 0 {
 		tx = 8
 	}
@@ -695,16 +988,16 @@ func (w *FramelessWindow) adjustMaximizedClientRect(hwnd win32.HWND, wParam, lPa
 	}
 
 	if wParam != 0 {
-		params := (*win32.NCCALCSIZE_PARAMS)(unsafe.Pointer(lParam))
+		params := (*platform.NCCALCSIZE_PARAMS)(unsafe.Pointer(lParam))
 		r := &params.Rgrc[0]
 		r.Left += tx
 		r.Right -= tx
 		r.Top += ty
 		r.Bottom -= ty
-		return win32.WVR_REDRAW
+		return platform.WVR_REDRAW
 	}
 
-	rect := (*win32.RECT)(unsafe.Pointer(lParam))
+	rect := (*platform.RECT)(unsafe.Pointer(lParam))
 	rect.Left += tx
 	rect.Right -= tx
 	rect.Top += ty
@@ -748,21 +1041,21 @@ func (w *FramelessWindow) HitTest(x, y int) int32 {
 
 		switch {
 		case onTop && onLeft:
-			return win32.HTTOPLEFT
+			return platform.HTTOPLEFT
 		case onTop && onRight:
-			return win32.HTTOPRIGHT
+			return platform.HTTOPRIGHT
 		case onBottom && onLeft:
-			return win32.HTBOTTOMLEFT
+			return platform.HTBOTTOMLEFT
 		case onBottom && onRight:
-			return win32.HTBOTTOMRIGHT
+			return platform.HTBOTTOMRIGHT
 		case onLeft:
-			return win32.HTLEFT
+			return platform.HTLEFT
 		case onRight:
-			return win32.HTRIGHT
+			return platform.HTRIGHT
 		case onTop:
-			return win32.HTTOP
+			return platform.HTTOP
 		case onBottom:
-			return win32.HTBOTTOM
+			return platform.HTBOTTOM
 		}
 	}
 
@@ -777,14 +1070,14 @@ func (w *FramelessWindow) HitTest(x, y int) int32 {
 			// drags the window.
 			for c := w.ChildAt(x, y); c != nil && c.UnsafePointer() != tb.UnsafePointer(); c = c.ParentWidget() {
 				if isTitleBarInteractive(c) {
-					return win32.HTCLIENT
+					return platform.HTCLIENT
 				}
 			}
-			return win32.HTCAPTION
+			return platform.HTCAPTION
 		}
 	}
 
-	return win32.HTCLIENT
+	return platform.HTCLIENT
 }
 
 // isTitleBarButton reports whether the widget is marked as a title bar button.

@@ -162,8 +162,8 @@ func newDemo2() *Demo2 {
 	// SetObjectName.
 	w.SetObjectName("Demo2")
 	w.SetStyleSheet("#Demo2{background: white}")
-	// The Python demo also sets a window icon from ":/qfluentwidgets/images/logo.png";
-	// that Qt resource is not embedded in this demo, so the icon is omitted.
+	// The Python demo also sets a window icon from its Qt resource bundle; those
+	// resources are not embedded in this demo, so the icon is omitted.
 	w.SetWindowTitle("Click Image 👇️🥵")
 
 	return w

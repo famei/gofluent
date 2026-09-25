@@ -388,11 +388,11 @@ var fluentStyleSheetNames = [...]string{
 // Name returns the stylesheet name (QSS filename without extension).
 func (s FluentStyleSheet) Name() string { return fluentStyleSheetNames[s] }
 
-// Path returns the logical Qt resource path of the stylesheet.
-func (s FluentStyleSheet) Path(theme Theme) string {
-	t := resolvedTheme(theme)
-	return ":/qfluentwidgets/qss/" + t.Lower() + "/" + s.Name() + ".qss"
-}
+// Path returns an empty string. The Python original points at a Qt resource of
+// its compiled-in resource bundle, but the Go port has none: every stylesheet is
+// embedded with go:embed and applied through Content (see Apply), so there is no
+// Qt resource path for a style sheet to name.
+func (s FluentStyleSheet) Path(theme Theme) string { return "" }
 
 // Content returns the raw QSS content for the given theme.
 func (s FluentStyleSheet) Content(theme Theme) string {

@@ -151,6 +151,13 @@ func (w *TabItem) installEvents() {
 	})
 	w.OnMouseMoveEvent(func(super func(event *qt.QMouseEvent), event *qt.QMouseEvent) {
 		super(event)
+		// The frameless window's mouse-move resize route enables mouse tracking deep
+		// in the widget tree, so hover moves reach a tab item as well; forwarding them
+		// would let a movable tab bar reorder tabs on plain hover. Qt only delivers a
+		// move without mouse tracking while a button is held, so require one.
+		if event.Buttons() == qt.NoButton {
+			return
+		}
 		if w.onDragMove != nil {
 			p := event.Pos()
 			w.onDragMove(w.X()+p.X(), w.Y()+p.Y())

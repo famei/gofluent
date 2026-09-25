@@ -461,6 +461,15 @@ func (w *ScrollBar) installEvents() {
 	})
 	w.OnMouseMoveEvent(func(super func(event *qt.QMouseEvent), event *qt.QMouseEvent) {
 		super(event)
+		// The frameless window's mouse-move resize route (SetMouseMoveResizeEnabled)
+		// turns on mouse tracking for every child widget so it can keep updating the
+		// resize cursor, which means this bar also receives plain hover moves. Qt
+		// only delivers a move to a widget without mouse tracking while a button is
+		// held, so ignore exactly those hover moves: only a drag that started on
+		// this bar moves it.
+		if !w.isPressed || event.Buttons() == qt.NoButton {
+			return
+		}
 		var dv int
 		if w.orientation == qt.Vertical {
 			dv = event.Y() - w.pressedY

@@ -232,7 +232,25 @@ func FadeOut(w *qt.QWidget, duration int, curve *qt.QEasingCurve) *qt.QPropertyA
 	return animateOpacity(w, 1.0, 0.0, duration, curve)
 }
 
+// FadeInThen fades a widget in and runs done once the animation has finished. Use it for a
+// child widget that carries a drop shadow: Qt gives a widget only one graphics effect, so
+// the opacity effect replaces the shadow and done has to install it again. A child widget
+// repaints normally, which is what makes this fade visible where fading a top level window
+// is not (see FadeWindowIn).
+func FadeInThen(w *qt.QWidget, duration int, curve *qt.QEasingCurve, done func()) *qt.QPropertyAnimation {
+	return animateOpacityThen(w, 0.0, 1.0, duration, curve, done)
+}
+
+// FadeOutThen fades a widget out and runs done once the animation has finished.
+func FadeOutThen(w *qt.QWidget, duration int, curve *qt.QEasingCurve, done func()) *qt.QPropertyAnimation {
+	return animateOpacityThen(w, 1.0, 0.0, duration, curve, done)
+}
+
 func animateOpacity(w *qt.QWidget, from, to float64, duration int, curve *qt.QEasingCurve) *qt.QPropertyAnimation {
+	return animateOpacityThen(w, from, to, duration, curve, nil)
+}
+
+func animateOpacityThen(w *qt.QWidget, from, to float64, duration int, curve *qt.QEasingCurve, done func()) *qt.QPropertyAnimation {
 	effect := qt.NewQGraphicsOpacityEffect2(w.QObject)
 	w.SetGraphicsEffect(effect.QGraphicsEffect)
 
@@ -249,6 +267,13 @@ func animateOpacity(w *qt.QWidget, from, to float64, duration int, curve *qt.QEa
 	ani.SetEndValue(end)
 	end.Delete()
 
+	if done != nil {
+		ani.OnFinished(func() {
+			w.SetGraphicsEffect(nil)
+			done()
+		})
+	}
+
 	ani.Start()
 	return ani
 }
@@ -262,6 +287,24 @@ func FadeWindowIn(w *qt.QWidget, duration int, curve *qt.QEasingCurve) *qt.QProp
 // FadeWindowOut fades a top-level window out via windowOpacity (1 -> 0).
 func FadeWindowOut(w *qt.QWidget, duration int, curve *qt.QEasingCurve) *qt.QPropertyAnimation {
 	return animateWindowOpacity(w, 1.0, 0.0, duration, curve)
+}
+
+// ApplyAfterMap runs fn once the widget has been mapped, i.e. on the next event loop
+// iteration after it was shown. A position set before the window is mapped is not final: a
+// window manager may place the window itself, so anything that anchors a popup re-applies
+// its geometry here (see also widgets.ToolTip's move guard, which corrects a window manager
+// that moves the window after the map).
+func ApplyAfterMap(w *qt.QWidget, fn func()) {
+	if w == nil || fn == nil {
+		return
+	}
+	timer := qt.NewQTimer2(w.QObject)
+	timer.SetSingleShot(true)
+	timer.OnTimeout(func() {
+		fn()
+		timer.DeleteLater()
+	})
+	timer.Start(0)
 }
 
 func animateWindowOpacity(w *qt.QWidget, from, to float64, duration int, curve *qt.QEasingCurve) *qt.QPropertyAnimation {

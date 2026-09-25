@@ -519,7 +519,6 @@ type FileTree struct {
 	*qt.QTreeView
 	delegate       *FileTreeItemDelegate
 	scrollDelegate *SmoothScrollDelegate
-	themeAlive     *widgetAlive
 
 	// items is the model behind the item flavor; it is replaced by SetModel.
 	items *qt.QStandardItemModel
@@ -675,13 +674,10 @@ func (self *FileTree) ChevronSize() int { return self.chevronSize }
 
 // initTheme re-renders the item glyphs and repaints the rows when the
 // application theme changes; the stylesheet itself is refreshed by the
-// stylesheet manager.
+// stylesheet manager. The listener is tied to the tree, so the registry drops it
+// when the tree is destroyed.
 func (self *FileTree) initTheme() {
-	self.themeAlive = trackWidget(self.OnDestroyed)
-	common.QConfigInstance.OnThemeChanged(func(common.Theme) {
-		if !self.themeAlive.ok() {
-			return
-		}
+	common.QConfigInstance.OnThemeChangedFor(self.QObject, func(common.Theme) {
 		self.RefreshItemIcons()
 		if vp := self.Viewport(); vp != nil {
 			vp.Update()

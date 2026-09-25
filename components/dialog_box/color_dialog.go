@@ -64,6 +64,12 @@ func NewHuePanel(color *qt.QColor, parent *qt.QWidget) *HuePanel {
 	})
 	p.OnMouseMoveEvent(func(super func(e *qt.QMouseEvent), e *qt.QMouseEvent) {
 		super(e)
+		// Same reason as ScrollBar/Slider: the frameless window's mouse-move resize
+		// route enables mouse tracking deep in the widget tree, so hover moves reach
+		// this panel as well and must not pick a colour.
+		if e.Buttons() == qt.NoButton {
+			return
+		}
 		pos := e.Pos()
 		p.setPickerPosition(pos)
 

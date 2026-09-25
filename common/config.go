@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 
@@ -407,19 +408,26 @@ type QConfig struct {
 
 	file string
 
-	themeListeners         []func(Theme)
-	colorListeners         []func(*qt.QColor)
-	restartListeners       []func()
-	themeFinishedListeners []func()
+	themeListeners         map[ListenerID]func(Theme)
+	colorListeners         map[ListenerID]func(*qt.QColor)
+	restartListeners       map[ListenerID]func()
+	themeFinishedListeners map[ListenerID]func()
+	// listenerSeq hands out the listener ids; ids are unique across the four
+	// registries, so RemoveListener does not need to know which one holds it.
+	listenerSeq ListenerID
 }
 
 // NewQConfig builds a QConfig with the same defaults as the Python package.
 func NewQConfig() *QConfig {
 	c := &QConfig{
-		theme:        ThemeLight,
-		themeColor:   qt.NewQColor6("#009faa"),
-		fontFamilies: []string{"Segoe UI", "Microsoft YaHei", "PingFang SC"},
-		file:         "config/config.json",
+		theme:                  ThemeLight,
+		themeColor:             qt.NewQColor6("#009faa"),
+		fontFamilies:           []string{"Segoe UI", "Microsoft YaHei", "PingFang SC"},
+		file:                   "config/config.json",
+		themeListeners:         map[ListenerID]func(Theme){},
+		colorListeners:         map[ListenerID]func(*qt.QColor){},
+		restartListeners:       map[ListenerID]func(){},
+		themeFinishedListeners: map[ListenerID]func(){},
 	}
 	c.themeMode = NewConfigItem("QFluentWidgets", "ThemeMode", ThemeLight, NewOptionsValidator(ThemeLight, ThemeDark, ThemeAuto), EnumSerializer{}, false)
 	c.themeColorItem = NewConfigItem("QFluentWidgets", "ThemeColor", c.themeColor, NewColorValidator("#009faa"), ColorSerializer{}, false)
@@ -621,33 +629,118 @@ func (c *QConfig) SetFontFamilies(families []string, save bool) {
 
 // ---------------------------------------------------------------------------
 // Callback registries (pyqtSignal equivalents)
+//
+// The listeners live in maps keyed by a ListenerID instead of plain slices, so a
+// listener can be dropped again — RemoveListener for an explicit removal, or the
+// On...For variants, which drop the listener together with the widget that
+// registered it. A Go closure is not a Qt slot: without that, a theme switch after
+// the widget was destroyed would call into freed memory.
 
-// OnThemeChanged registers a listener for theme changes.
-func (c *QConfig) OnThemeChanged(l func(Theme)) {
+// ListenerID identifies a registered signal listener (see RemoveListener).
+type ListenerID uint64
+
+// nextListenerID reserves a new listener id.
+func (c *QConfig) nextListenerID() ListenerID {
+	c.listenerSeq++
+	return c.listenerSeq
+}
+
+// OnThemeChanged registers a listener for theme changes and returns the id needed
+// to remove it again; use OnThemeChangedFor to tie it to a widget instead.
+func (c *QConfig) OnThemeChanged(l func(Theme)) ListenerID {
 	c.mu.Lock()
-	c.themeListeners = append(c.themeListeners, l)
-	c.mu.Unlock()
+	defer c.mu.Unlock()
+	id := c.nextListenerID()
+	c.themeListeners[id] = l
+	return id
+}
+
+// OnThemeChangedFor registers a theme listener that is removed from the registry
+// when owner is destroyed. Widgets use it for their theme callbacks, so a theme
+// switch can never call into a freed widget.
+func (c *QConfig) OnThemeChangedFor(owner *qt.QObject, l func(Theme)) ListenerID {
+	id := c.OnThemeChanged(l)
+	c.dropWithOwner(id, owner)
+	return id
 }
 
 // OnThemeColorChanged registers a listener for theme color changes.
-func (c *QConfig) OnThemeColorChanged(l func(*qt.QColor)) {
+func (c *QConfig) OnThemeColorChanged(l func(*qt.QColor)) ListenerID {
 	c.mu.Lock()
-	c.colorListeners = append(c.colorListeners, l)
-	c.mu.Unlock()
+	defer c.mu.Unlock()
+	id := c.nextListenerID()
+	c.colorListeners[id] = l
+	return id
+}
+
+// OnThemeColorChangedFor registers a theme color listener that is removed from the
+// registry when owner is destroyed.
+func (c *QConfig) OnThemeColorChangedFor(owner *qt.QObject, l func(*qt.QColor)) ListenerID {
+	id := c.OnThemeColorChanged(l)
+	c.dropWithOwner(id, owner)
+	return id
 }
 
 // OnAppRestart registers a listener for the appRestart signal.
-func (c *QConfig) OnAppRestart(l func()) {
+func (c *QConfig) OnAppRestart(l func()) ListenerID {
 	c.mu.Lock()
-	c.restartListeners = append(c.restartListeners, l)
-	c.mu.Unlock()
+	defer c.mu.Unlock()
+	id := c.nextListenerID()
+	c.restartListeners[id] = l
+	return id
+}
+
+// OnAppRestartFor registers an appRestart listener that is removed from the
+// registry when owner is destroyed.
+func (c *QConfig) OnAppRestartFor(owner *qt.QObject, l func()) ListenerID {
+	id := c.OnAppRestart(l)
+	c.dropWithOwner(id, owner)
+	return id
 }
 
 // OnThemeChangedFinished registers a listener for themeChangedFinished.
-func (c *QConfig) OnThemeChangedFinished(l func()) {
+func (c *QConfig) OnThemeChangedFinished(l func()) ListenerID {
 	c.mu.Lock()
-	c.themeFinishedListeners = append(c.themeFinishedListeners, l)
-	c.mu.Unlock()
+	defer c.mu.Unlock()
+	id := c.nextListenerID()
+	c.themeFinishedListeners[id] = l
+	return id
+}
+
+// OnThemeChangedFinishedFor registers a themeChangedFinished listener that is
+// removed from the registry when owner is destroyed.
+func (c *QConfig) OnThemeChangedFinishedFor(owner *qt.QObject, l func()) ListenerID {
+	id := c.OnThemeChangedFinished(l)
+	c.dropWithOwner(id, owner)
+	return id
+}
+
+// RemoveListener drops a listener registered with one of the On... methods.
+func (c *QConfig) RemoveListener(id ListenerID) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.themeListeners, id)
+	delete(c.colorListeners, id)
+	delete(c.restartListeners, id)
+	delete(c.themeFinishedListeners, id)
+}
+
+// dropWithOwner removes a listener when its owner is destroyed (a nil owner keeps
+// the listener for the process lifetime).
+func (c *QConfig) dropWithOwner(id ListenerID, owner *qt.QObject) {
+	if owner == nil {
+		return
+	}
+	owner.OnDestroyed(func() { c.RemoveListener(id) })
+}
+
+// ThemeListenerCount returns how many theme listeners are registered; it is meant
+// for diagnostics (a widget that leaks a listener after its destruction keeps the
+// count from dropping).
+func (c *QConfig) ThemeListenerCount() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.themeListeners)
 }
 
 // EmitThemeChangedFinished emits the themeChangedFinished signal.
@@ -677,28 +770,47 @@ func (c *QConfig) emitRestart() {
 	}
 }
 
+// snapshotTheme copies the theme listeners in registration order (the maps are
+// unordered by nature; the ids carry the order so a listener always sees the same
+// sequence as a slice would have given).
 func (c *QConfig) snapshotTheme() []func(Theme) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return append([]func(Theme){}, c.themeListeners...)
+	return orderedListeners(c.themeListeners)
 }
 
 func (c *QConfig) snapshotColor() []func(*qt.QColor) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return append([]func(*qt.QColor){}, c.colorListeners...)
+	return orderedListeners(c.colorListeners)
 }
 
 func (c *QConfig) snapshotRestart() []func() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return append([]func(){}, c.restartListeners...)
+	return orderedListeners(c.restartListeners)
 }
 
 func (c *QConfig) snapshotFinished() []func() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return append([]func(){}, c.themeFinishedListeners...)
+	return orderedListeners(c.themeFinishedListeners)
+}
+
+// orderedListeners returns the listeners of a registry sorted by their id, which
+// is their registration order.
+func orderedListeners[L any](listeners map[ListenerID]L) []L {
+	ids := make([]ListenerID, 0, len(listeners))
+	for id := range listeners {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+
+	out := make([]L, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, listeners[id])
+	}
+	return out
 }
 
 // ---------------------------------------------------------------------------

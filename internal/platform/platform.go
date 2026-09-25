@@ -1,13 +1,10 @@
-// Package win32 provides the small set of Win32 API bindings needed by the
-// gofluent frameless-window implementation (WM_NCHITTEST hit-testing, DWM
-// shadows/backdrops and the Windows 10 acrylic accent policy). The bindings are
-// pure Go on top of golang.org/x/sys/windows and carry no CGO dependencies, so
-// they cross-compile for windows/amd64 from WSL/MXE without extra link flags.
-//
-// Constants and structure types live in this build-agnostic file so the rest of
-// the library can reference them on every platform; the actual function
-// implementations are split between win32_windows.go and win32_other.go.
-package win32
+// Package platform holds the operating-system specific window APIs the library
+// needs, split by GOOS: platform_windows.go talks to user32/dwmapi directly,
+// platform_linux.go shapes the window through Qt (X11), and platform_other.go
+// provides the no-ops for every other system. Only constants and structure types
+// live in this build-agnostic file, so the rest of the library can reference them
+// on every platform.
+package platform
 
 import "unsafe"
 
@@ -16,9 +13,10 @@ type HWND uintptr
 
 // Window messages.
 const (
-	WM_NCHITTEST       = 0x0084
-	WM_NCCALCSIZE      = 0x0083
-	WM_NCLBUTTONDOWN   = 0x00A1
+	WM_NCHITTEST     = 0x0084
+	WM_NCCALCSIZE    = 0x0083
+	WM_NCLBUTTONDOWN = 0x00A1
+	WM_SIZE          = 0x0005
 
 	// RedrawWindow flags.
 	RDW_INVALIDATE = 0x0001
@@ -108,6 +106,13 @@ const (
 	DWMWCP_DONOTROUND = 1
 	DWMWCP_ROUND      = 2
 	DWMWCP_ROUNDSMALL = 3
+)
+
+// Window region helpers (Windows 10 rounded corners).
+const (
+	// DefaultCornerRadius is the corner radius of a frameless window in logical
+	// pixels, matching the Windows 11 rounded-corner preference.
+	DefaultCornerRadius = 8
 )
 
 // SetWindowCompositionAttribute attribute and accent state values.

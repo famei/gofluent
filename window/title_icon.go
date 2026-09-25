@@ -20,7 +20,7 @@ import (
 // the theme.
 func (t *FluentTitleBar) SetTitleIcon(icon common.FluentIconBase) {
 	t.iconSource = icon
-	ensureTitleIconHook(t.QWidget, t.iconLabel, &t.iconSource, &t.iconHooked, &t.iconGone)
+	ensureTitleIconHook(t.QWidget, t.iconLabel, &t.iconSource, &t.iconHooked)
 	renderTitleIcon(t.iconLabel, icon)
 }
 
@@ -31,7 +31,7 @@ func (t *FluentTitleBar) TitleIcon() common.FluentIconBase { return t.iconSource
 // the theme.
 func (t *SplitTitleBar) SetTitleIcon(icon common.FluentIconBase) {
 	t.iconSource = icon
-	ensureTitleIconHook(t.QWidget, t.iconLabel, &t.iconSource, &t.iconHooked, &t.iconGone)
+	ensureTitleIconHook(t.QWidget, t.iconLabel, &t.iconSource, &t.iconHooked)
 	renderTitleIcon(t.iconLabel, icon)
 }
 
@@ -39,18 +39,15 @@ func (t *SplitTitleBar) SetTitleIcon(icon common.FluentIconBase) {
 func (t *SplitTitleBar) TitleIcon() common.FluentIconBase { return t.iconSource }
 
 // ensureTitleIconHook registers the theme-changed re-render once per title bar. It
-// reads the source through the pointer so later SetTitleIcon calls are picked up, and
-// stops touching the label once the bar is destroyed.
-func ensureTitleIconHook(owner *qt.QWidget, label *qt.QLabel, source *common.FluentIconBase, hooked, gone *bool) {
+// reads the source through the pointer so later SetTitleIcon calls are picked up;
+// the listener is tied to the bar, so the registry drops it when the bar is
+// destroyed and it can never touch the freed label.
+func ensureTitleIconHook(owner *qt.QWidget, label *qt.QLabel, source *common.FluentIconBase, hooked *bool) {
 	if *hooked || owner == nil || label == nil {
 		return
 	}
 	*hooked = true
-	owner.OnDestroyed(func() { *gone = true })
-	common.QConfigInstance.OnThemeChanged(func(common.Theme) {
-		if *gone {
-			return
-		}
+	common.QConfigInstance.OnThemeChangedFor(owner.QObject, func(common.Theme) {
 		renderTitleIcon(label, *source)
 	})
 }
