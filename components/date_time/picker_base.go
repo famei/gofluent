@@ -847,9 +847,12 @@ func (p *PickerPanel) Exec(pos *qt.QPoint, ani bool) {
 	}
 
 	if ani {
-		// Start fully transparent so the fade-in has no visible flash; the mask
-		// is applied on the first animation frame after Show finalises geometry.
-		p.SetWindowOpacity(0)
+		// Start fully collapsed; the reveal itself is the animation. The window stays opaque:
+		// windowOpacity is ignored by some compositors (WSLg's Weston does not honour
+		// _NET_WM_WINDOW_OPACITY, which made the opening animation invisible there) and where
+		// it is honoured the panel is mapped invisible first and only appears with the first
+		// animation step.
+		p.applyMask(0)
 	}
 
 	// Show before running the animation so the layout/geometry is final when the
@@ -870,7 +873,7 @@ func (p *PickerPanel) Exec(pos *qt.QPoint, ani bool) {
 	if ani {
 		p.playShowAnimation()
 	} else {
-		p.SetWindowOpacity(1)
+		p.ClearMask()
 	}
 }
 
@@ -907,12 +910,10 @@ func (p *PickerPanel) playShowAnimation() {
 	p.ani = common.NewProgressAnimation(150, curve)
 	curve.Delete() // SetEasingCurve copies; the temporary is freed here.
 	p.ani.OnProgress(func(t float64) {
-		p.SetWindowOpacity(t)
 		p.applyMask(t)
 	})
 	p.ani.OnFinished(func() {
 		p.ClearMask()
-		p.SetWindowOpacity(1)
 		// Do not Delete the animation from inside its own finished handler
 		// (use-after-free); stopAnimation() reclaims it when the panel is next
 		// closed or reopened.
@@ -928,7 +929,6 @@ func (p *PickerPanel) fadeOut() {
 	p.ani = common.NewProgressAnimation(150, curve)
 	curve.Delete() // SetEasingCurve copies; the temporary is freed here.
 	p.ani.OnProgress(func(t float64) {
-		p.SetWindowOpacity(1 - t)
 		// applyMask takes the *opacity* value (1 -> 0 during fade-out), exactly
 		// like the Python _onAniValueChanged; passing the 0 -> 1 progress here
 		// reversed the collapse and left a ghosting/afterimage behind the

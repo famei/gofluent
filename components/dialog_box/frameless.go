@@ -1,6 +1,7 @@
 package dialog_box
 
 import (
+	"runtime"
 	"unsafe"
 
 	"github.com/famei/gofluent/components/widgets"
@@ -21,7 +22,15 @@ import (
 //     edges instead of being inset by a native caption/border.
 
 // installFramelessDrag makes win draggable by dragging titleWidget.
+//
+// Windows is answered through WM_NCHITTEST (the window manager then runs its own move loop).
+// Everywhere else that message does not exist, so the drag is started from the mouse events
+// of the title strip instead (installQtDrag).
 func installFramelessDrag(win *qt.QDialog, titleWidget *qt.QWidget) {
+	if runtime.GOOS != "windows" {
+		installQtDrag(win, titleWidget)
+		return
+	}
 	win.OnNativeEvent(func(super func(eventType []byte, message unsafe.Pointer, result *int64) bool,
 		eventType []byte, message unsafe.Pointer, result *int64) bool {
 
@@ -45,6 +54,61 @@ func installFramelessDrag(win *qt.QDialog, titleWidget *qt.QWidget) {
 			}
 		}
 		return super(eventType, message, result)
+	})
+}
+
+// installQtDrag makes the title strip drag the dialog where WM_NCHITTEST does not exist: a
+// left press on the strip arms the drag and the first move hands it to the platform's move
+// loop through QWindow::startSystemMove, exactly like widgets.FramelessWindow does for its
+// own title bar.
+//
+// A platform without a window manager move loop (WSLg's Weston, for one) accepts the call
+// but never moves anything, so the moves that still arrive here drag the window directly
+// instead. Only one of the two can act: as soon as the platform takes the drag over it grabs
+// the pointer and no further move events reach the widget.
+//
+// The filter watches the strip widget itself, so a control placed on the strip (a button)
+// still receives its own clicks instead of starting a move.
+func installQtDrag(win *qt.QDialog, dragArea *qt.QWidget) {
+	if dragArea == nil {
+		return
+	}
+	filter := qt.NewQObject2(dragArea.QObject)
+	dragArea.InstallEventFilter(filter)
+
+	var (
+		armed         bool
+		dragging      bool
+		startGlobalX  int
+		startGlobalY  int
+		startWinX     int
+		startWinY     int
+	)
+	filter.OnEventFilter(func(super func(watched *qt.QObject, event *qt.QEvent) bool, watched *qt.QObject, event *qt.QEvent) bool {
+		if me := mouseEventOf(event); me != nil {
+			switch me.Type() {
+			case qt.QEvent__MouseButtonPress:
+				armed = me.Button() == qt.LeftButton
+			case qt.QEvent__MouseMove:
+				if armed && me.Buttons()&qt.LeftButton != 0 {
+					armed = false
+					dragging = true
+					g := me.GlobalPos()
+					startGlobalX, startGlobalY = g.X(), g.Y()
+					startWinX, startWinY = win.X(), win.Y()
+					if handle := win.WindowHandle(); handle != nil {
+						handle.StartSystemMove()
+					}
+				} else if dragging {
+					g := me.GlobalPos()
+					win.Move(startWinX+g.X()-startGlobalX, startWinY+g.Y()-startGlobalY)
+				}
+			case qt.QEvent__MouseButtonRelease:
+				armed = false
+				dragging = false
+			}
+		}
+		return super(watched, event)
 	})
 }
 

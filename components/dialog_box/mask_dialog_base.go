@@ -30,8 +30,8 @@ type MaskDialogBase struct {
 	shadowOffsetX    float64
 	shadowOffsetY    float64
 
-	// maskColor is the colour the full-window mask is tinted with. The alpha is the
-	// fully faded-in opacity; the fade scales it (see animateMaskAlpha).
+	// maskColor is the colour the full-window mask is tinted with. Its alpha is the fully
+	// faded-in opacity; the fade itself is a graphics effect on the mask widget.
 	maskR, maskG, maskB, maskA int
 }
 
@@ -59,21 +59,11 @@ func NewMaskDialogBase(parent *qt.QWidget) *MaskDialogBase {
 		c = 255
 	}
 	d.windowMask.Resize(d.Width(), d.Height())
-	// 153 is the Python original's "rgba(c, c, c, 0.6)" alpha, written as a byte so the
-	// fade can scale it (a float alpha is not readable back from a stylesheet).
+	// 153 is the Python original's "rgba(c, c, c, 0.6)" alpha, written as a byte.
 	d.maskR, d.maskG, d.maskB, d.maskA = c, c, c, 153
-	d.applyMaskColor(1)
+	d.applyMaskColor()
 	d.hBoxLayout.AddWidget(d.widget.QWidget)
 	d.SetShadowEffect(60, 0, 10, qt.NewQColor11(0, 0, 0, 100))
-
-	if runtime.GOOS != "windows" {
-		// The fade-in animates the window opacity from 0 (startFadeIn), and a window is
-		// mapped with the opacity it was last given: with the default 1 the dialog showed
-		// one fully opaque frame, then jumped to 0 and faded in, which is the flash the
-		// message box made when it opened. Setting it before the window exists removes that
-		// frame on every platform that honours window opacity.
-		d.SetWindowOpacity(0)
-	}
 
 	d.Window().InstallEventFilter(d.QObject)
 	d.windowMask.InstallEventFilter(d.QObject)
@@ -126,34 +116,15 @@ func (d *MaskDialogBase) SetMaskColor(color *qt.QColor) {
 		return
 	}
 	d.maskR, d.maskG, d.maskB, d.maskA = color.Red(), color.Green(), color.Blue(), color.Alpha()
-	d.applyMaskColor(1)
+	d.applyMaskColor()
 }
 
-// applyMaskColor writes the mask colour with its alpha scaled by scale (1 is the fully
-// faded-in mask, 0 a completely transparent one). The mask is a plain widget, so the
-// colour lives in its stylesheet.
-func (d *MaskDialogBase) applyMaskColor(scale float64) {
-	alpha := d.maskA
-	if scale < 1 {
-		alpha = int(math.Round(float64(d.maskA) * scale))
-	}
+// applyMaskColor writes the mask colour into the mask widget's stylesheet. The alpha is the
+// fully faded-in one: the fade itself is a graphics effect on the widget (see startFadeIn),
+// so the colour does not have to be rewritten per frame.
+func (d *MaskDialogBase) applyMaskColor() {
 	d.windowMask.SetStyleSheet(fmt.Sprintf("background: rgba(%d, %d, %d, %d)",
-		d.maskR, d.maskG, d.maskB, alpha))
-}
-
-// animateMaskAlpha fades the mask by scaling the alpha of its colour, one stylesheet
-// update per animation step. Setting the stylesheet repaints the mask, which is what
-// makes the fade visible where fading the window itself does not reach the screen (see
-// startFadeIn).
-func (d *MaskDialogBase) animateMaskAlpha(from, to float64, duration int) *qt.QVariantAnimation {
-	ani := qt.NewQVariantAnimation2(d.QObject)
-	ani.SetStartValue(qt.NewQVariant12(from))
-	ani.SetEndValue(qt.NewQVariant12(to))
-	ani.SetDuration(duration)
-	ani.SetEasingCurve(qt.NewQEasingCurve3(qt.QEasingCurve__InSine))
-	ani.OnValueChanged(func(value *qt.QVariant) { d.applyMaskColor(value.ToDouble()) })
-	ani.Start()
-	return ani
+		d.maskR, d.maskG, d.maskB, d.maskA))
 }
 
 // IsClosableOnMaskClicked reports whether clicking the mask closes the dialog.
@@ -251,9 +222,29 @@ func (d *MaskDialogBase) startFadeIn() {
 		return
 	}
 
-	d.applyMaskColor(0)
-	d.animateMaskAlpha(0, 1, 200)
-	common.FadeWindowIn(d.QWidget, 200, qt.NewQEasingCurve3(qt.QEasingCurve__InSine))
+	// The mask and the card are faded with a graphics effect each, not with the window
+	// opacity the Python original animates: window opacity needs a compositor that honours
+	// _NET_WM_WINDOW_OPACITY, and where it is honoured the window is mapped with the value it
+	// had before the first animation step, so the dialog showed one opaque frame before it
+	// jumped to 0 and faded in (the flash when it opened). Child widgets repaint normally on
+	// every platform.
+	d.fadeInChildren(200)
+}
+
+// fadeInChildren fades the mask and the card in over duration ms.
+func (d *MaskDialogBase) fadeInChildren(duration int) {
+	curve := qt.NewQEasingCurve3(qt.QEasingCurve__InSine)
+	common.FadeInThen(d.windowMask, duration, curve, nil)
+	// The card carries the drop shadow as its graphics effect and Qt gives a widget only one
+	// effect, so the shadow is installed again when the fade ends.
+	common.FadeInThen(d.widget.QWidget, duration, curve, d.installShadowEffect)
+}
+
+// installShadowEffect puts the card's drop shadow back on the card.
+func (d *MaskDialogBase) installShadowEffect() {
+	color := qt.NewQColor11(0, 0, 0, 100)
+	defer color.Delete()
+	d.SetShadowEffect(60, 0, 10, color)
 }
 
 // startFadeOut fades the dialog out over 100 ms and then runs done (QDialog.done), which
@@ -277,10 +268,10 @@ func (d *MaskDialogBase) startFadeOut(done func()) {
 		return
 	}
 
-	// The card keeps its shadow here (nothing else animates it).
-	ani := d.animateMaskAlpha(1, 0, 100)
-	common.FadeWindowOut(d.QWidget, 100, qt.NewQEasingCurve3(qt.QEasingCurve__InSine))
-	ani.OnFinished(done)
+	// Both children fade out; the card's shadow is dropped with it (the dialog is closing).
+	curve := qt.NewQEasingCurve3(qt.QEasingCurve__InSine)
+	common.FadeOutThen(d.windowMask, 100, curve, nil)
+	common.FadeOutThen(d.widget.QWidget, 100, curve, done)
 }
 
 func (d *MaskDialogBase) handleDrag(me *qt.QMouseEvent) {

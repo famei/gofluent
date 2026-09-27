@@ -183,7 +183,11 @@ func (w *NavigationBarPushButton) drawIcon(painter *qt.QPainter) {
 		selectedIcon = w.selectedIcon
 	}
 	if w.IsSelected || w.IsAboutSelected {
-		common.DrawIcon(selectedIcon, painter, rect)
+		// The selected icon follows the selected *text* colour: drawing it in the theme icon
+		// colour left the selected item with a white icon next to a themed label in dark mode.
+		color := fallbackThemeColor(w.lightSelectedColor, w.darkSelectedColor)
+		defer color.Delete()
+		common.DrawIconColor(selectedIcon, painter, rect, color)
 	} else {
 		common.DrawIcon(w.icon, painter, rect)
 	}

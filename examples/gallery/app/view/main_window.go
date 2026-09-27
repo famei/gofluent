@@ -1,6 +1,8 @@
 package view
 
 import (
+	"time"
+
 	gcommon "github.com/famei/gofluent/common"
 	"github.com/famei/gofluent/components/navigation"
 	gallerycommon "github.com/famei/gofluent/examples/gallery/app/common"
@@ -115,10 +117,25 @@ func NewMainWindow() *MainWindow {
 
 	w.connectSignalToSlot()
 	w.initNavigation()
-	w.splashScreen.Finish()
+	w.finishSplash()
 
 	w.themeListener.Start()
 	return w
+}
+
+// finishSplash closes the splash screen once the event loop has painted the window: the
+// timer only runs after QApplication.exec, so the splash covers the window for the first
+// frames instead of the window appearing half built (a black screen, as it did when the
+// splash was closed straight away in the constructor).
+func (w *MainWindow) finishSplash() {
+	timer := qt.NewQTimer2(w.QObject)
+	timer.SetSingleShot(true)
+	timer.OnTimeout(func() {
+		if w.splashScreen != nil {
+			w.splashScreen.Finish()
+		}
+	})
+	timer.Start(700)
 }
 
 func (w *MainWindow) positionTitleBar() {
@@ -140,12 +157,26 @@ func (w *MainWindow) initWindow() {
 
 	w.splashScreen = window.NewSplashScreen(w.WindowIcon(), w.QWidget, false)
 	w.splashScreen.SetIconSize(qt.NewQSize2(106, 106))
+	// Show it: the splash is a child widget of the window and covers it while the pages are
+	// built, which is what keeps the half-built window (an unpainted, black surface) out of
+	// sight until the event loop has painted the first frames. It is closed again by
+	// finishSplash (see NewMainWindow), which the Python demo replaces with a blocking event
+	// loop.
+	w.splashScreen.Show()
 	w.splashScreen.Raise()
 
 	desktop := qt.QApplication_Desktop().AvailableGeometry2()
 	w.Move(desktop.Width()/2-w.Width()/2, desktop.Height()/2-w.Height()/2)
 	w.Show()
-	qt.QCoreApplication_ProcessEvents()
+	// Let the window system map the window and paint the first frame - the splash screen
+	// covers it - before the pages below are built: building them does not run the event
+	// loop, so nothing would be painted until it ends and the window would sit there black
+	// (the window manager maps it as soon as it is shown, but its content only appears with
+	// the first paint).
+	for i := 0; i < 15; i++ {
+		qt.QCoreApplication_ProcessEvents()
+		time.Sleep(10 * time.Millisecond)
+	}
 
 	w.OnCloseEvent(func(super func(e *qt.QCloseEvent), e *qt.QCloseEvent) {
 		w.themeListener.Stop()

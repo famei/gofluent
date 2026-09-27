@@ -26,6 +26,13 @@ func NewSplashScreen(icon interface{}, parent *qt.QWidget, enableShadow bool) *S
 	w.iconWidget = widgets.NewIconWidgetIcon(icon, w.QWidget)
 	w.shadowEffect = qt.NewQGraphicsDropShadowEffect2(w.QObject)
 
+	if parent != nil {
+		// Cover the parent right away: it is usually already at its final size when the
+		// splash is created, so the resize event the filter listens for never arrives and the
+		// splash would stay at the default widget size - a small patch instead of a cover.
+		w.Resize(parent.Width(), parent.Height())
+	}
+
 	w.iconWidget.SetFixedSize(w.iconSize)
 	shadowColor := qt.NewQColor11(0, 0, 0, 50)
 	w.shadowEffect.SetColor(shadowColor)

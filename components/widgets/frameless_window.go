@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"unsafe"
 
+	"github.com/famei/gofluent/common"
 	"github.com/famei/gofluent/internal/platform"
 	qt "github.com/mappu/miqt/qt"
 )
@@ -123,10 +124,10 @@ func NewFramelessWindow(parent *qt.QWidget) *FramelessWindow {
 }
 
 // installRoundedCornerFilter re-applies the rounded corners whenever the window is
-// shown or resized. A QObject event filter is used (rather than the Qt resize hook)
-// because the window subclasses register their own OnResizeEvent handler, which replaces
-// - and would silently drop - the one of FramelessWindow. The filter never consumes an
-// event.
+// shown, resized or changes its window state. A QObject event filter is used (rather than
+// the Qt resize hook) because the window subclasses register their own OnResizeEvent
+// handler, which replaces - and would silently drop - the one of FramelessWindow. The
+// filter never consumes an event.
 func (w *FramelessWindow) installRoundedCornerFilter() {
 	w.roundedFilter = qt.NewQObject2(w.QObject)
 	w.InstallEventFilter(w.roundedFilter)
@@ -134,9 +135,28 @@ func (w *FramelessWindow) installRoundedCornerFilter() {
 		switch event.Type() {
 		case qt.QEvent__Resize, qt.QEvent__Show:
 			w.applyRoundedCorners()
+		case qt.QEvent__WindowStateChange:
+			// Qt learns "maximized"/"full screen" from the window manager, which reports the
+			// change around the same time as the resize: at that moment the state can still be
+			// the old one, and the corners would be left square after leaving full screen.
+			// Re-apply once the state has settled.
+			w.applyRoundedCornersLater()
 		}
 		return super(watched, event)
 	})
+}
+
+// applyRoundedCornersLater re-applies the corners on the next event loop iteration, when the
+// window manager's window state has arrived.
+func (w *FramelessWindow) applyRoundedCornersLater() {
+	timer := qt.NewQTimer2(w.QObject)
+	timer.SetSingleShot(true)
+	timer.OnTimeout(func() {
+		timer.DeleteLater()
+		w.rounded.valid = false
+		w.applyRoundedCorners()
+	})
+	timer.Start(0)
 }
 
 // SetShownHandler registers a callback invoked after the native frame is
@@ -948,7 +968,22 @@ func (w *FramelessWindow) isFramelessMaximized() bool {
 			return true
 		}
 	}
-	return w.IsMaximized() || w.IsFullScreen()
+	if w.IsMaximized() || w.IsFullScreen() {
+		return true
+	}
+	if runtime.GOOS == "linux" {
+		// Qt's own state comes from the window manager and can stay stale after leaving
+		// full screen (the corners then stay square, because the window is still reported as
+		// maximized). A window that covers its screen's geometry is maximized whatever Qt
+		// believes.
+		if g := common.GetWidgetScreenGeometry(w.QWidget, false); g != nil {
+			frame := w.FrameGeometry() // GoGC-armed — do NOT Delete
+			if frame.Width() >= g.Width() && frame.Height() >= g.Height() {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // clearRoundedCorners removes whatever rounding was applied, making the window

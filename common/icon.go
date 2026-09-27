@@ -256,6 +256,26 @@ func DrawIcon(icon interface{}, painter *qt.QPainter, rect *qt.QRectF) {
 	}
 }
 
+// DrawIconColor draws an icon source into a painter in an explicit colour.
+//
+// Icons that can be recoloured - the Segoe Fluent Icons glyphs, which is what the icon set of
+// this port is made of - are drawn in that colour; a plain QIcon or a file path cannot be, so
+// those fall back to DrawIcon (the icon's own theme colour).
+func DrawIconColor(icon interface{}, painter *qt.QPainter, rect *qt.QRectF, color *qt.QColor) {
+	if color == nil {
+		DrawIcon(icon, painter, rect)
+		return
+	}
+	switch v := icon.(type) {
+	case FluentIconBase:
+		v.Colored(color, color).Render(painter, rect, ThemeAuto)
+	case *Icon:
+		v.FluentIcon.Colored(color, color).Render(painter, rect, ThemeAuto)
+	default:
+		DrawIcon(icon, painter, rect)
+	}
+}
+
 // Action is a QAction that remembers the fluent icon it was created with.
 type Action struct {
 	*qt.QAction
